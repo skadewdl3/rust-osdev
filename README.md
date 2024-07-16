@@ -23,7 +23,11 @@
 
 # Compiling and Running the OS
 1. Firstly, run the build environment docker image: `make docker`.
-1. Run the following commands in the container's shell:
-    - Compile the kernel: `make`.
-    - Create the ISO image: `make iso`.
-2. To test the OS, run `make run` on your system shell.
+2. Then, compile the kernel and create the iso using: `make iso`.
+3. To test the OS, run `make run` on your system shell.
+
+# Testing
+1. The project does compiles for a bare metal target, hence it does not use the Rust standard library.
+2. I couldn't get `cargo test` to work with no-std, so I've used a scrappy custom testing framework.
+3. Annotate tests with `#[distributed_slice(crate::tests::TESTS)]` to add it to the list of tests.
+4. This is very much of a work in progress. I intend to have a `#[test_case]` macro similar to standard Rust, to annotate test cases.

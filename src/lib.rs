@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
-mod tests;
-mod vga_buffer;
+pub mod tests;
+pub mod vga_buffer;
 
 use core::panic::PanicInfo;
 use linkme::distributed_slice;
@@ -21,7 +21,7 @@ pub extern "C" fn rust_main() {
     println!("Hello World!");
 }
 
-#[distributed_slice(tests::TESTS)]
+#[distributed_slice(crate::tests::TESTS)]
 fn test1() {
     println!("trivial_assertion...");
     assert_eq!(1, 1);
