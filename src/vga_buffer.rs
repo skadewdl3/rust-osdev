@@ -142,3 +142,28 @@ pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
     WRITER.lock().write_fmt(args).unwrap();
 }
+
+#[linkme::distributed_slice(crate::tests::TESTS)]
+fn test_println_simple() {
+    crate::serial_print!("Test Printing to VGA");
+    println!("test_println_simple output");
+}
+
+#[linkme::distributed_slice(crate::tests::TESTS)]
+fn test_println_many() {
+    crate::serial_print!("Test Printing Multiple Lines to VGA");
+    for _ in 0..200 {
+        println!("test_println_many output");
+    }
+}
+
+#[linkme::distributed_slice(crate::tests::TESTS)]
+fn test_println_output() {
+    crate::serial_print!("Test if chars actually appear on VGA");
+    let s = "Some test string that fits on a single line";
+    println!("{}", s);
+    for (i, c) in s.chars().enumerate() {
+        let screen_char = WRITER.lock().buffer.chars[BUFFER_HEIGHT - 2][i].read();
+        assert_eq!(char::from(screen_char.ascii_character), c);
+    }
+}

@@ -2,14 +2,18 @@ arch ?= x86_64
 kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
 rust_os := target/$(arch)-unknown-linux-gnu/debug/libos.a
-buildenv_name := os_buildenv
-buildenv_source = buildenv
 
 linker_script := src/arch/$(arch)/linker.ld
 grub_cfg := src/arch/$(arch)/grub.cfg
 assembly_source_files := $(wildcard src/arch/$(arch)/*.asm)
 assembly_object_files := $(patsubst src/arch/$(arch)/%.asm, \
 	build/arch/$(arch)/%.o, $(assembly_source_files))
+
+
+buildenv_name := os_buildenv
+buildenv_source = buildenv
+
+qemu_args := -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -display none
 
 .PHONY: all clean run iso kernel test docker env
 
@@ -19,7 +23,7 @@ clean:
 	@rm -r build
 
 run:
-	@qemu-system-x86_64 -cdrom $(iso)
+	@qemu-system-x86_64 -cdrom $(iso) $(qemu_args)
 
 # Targets for generating a release (tests disabled) iso
 iso: $(iso)
