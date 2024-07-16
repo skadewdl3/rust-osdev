@@ -18,7 +18,7 @@ all: $(kernel)
 clean:
 	@rm -r build
 
-run: $(iso)
+run:
 	@qemu-system-x86_64 -cdrom $(iso)
 
 iso: $(iso)
