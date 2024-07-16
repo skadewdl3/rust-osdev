@@ -2,8 +2,8 @@ arch ?= x86_64
 kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
 rust_os := target/$(arch)-unknown-linux-gnu/debug/libos.a
-
-
+buildenv_name := os_buildenv
+buildenv_source = buildenv
 
 linker_script := src/arch/$(arch)/linker.ld
 grub_cfg := src/arch/$(arch)/grub.cfg
@@ -17,6 +17,12 @@ all: $(kernel)
 
 clean:
 	@rm -r build
+
+docker:
+	@docker run --rm -it -v $(shell pwd):/root/env $(buildenv_name)
+
+env:
+	@docker build $(buildenv_source) -t $(buildenv_name)
 
 run:
 	@qemu-system-x86_64 -cdrom $(iso)

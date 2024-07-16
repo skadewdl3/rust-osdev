@@ -1,24 +1,29 @@
 # Rust OS Dev
  This repository documents my exploration in operating system development using (primarily) Rust.
 
-# Build Environment Setup
+# Install Required Tools
 1. Setup [Docker](https://www.docker.com/) on your system.
-2. Clone this repository.
-3. Build the build environment image using `docker build buildenv -t myos-buildenv` (this might take a while).
-4. This should install all required tools (gcc cross compiler, xorisso, grub tools, make, nasm, etc.)
-5. Now create a container from this image using
-    - Windows: `docker run --rm -it -v %cd%:/root/env myos-buildenv`
-    - Linux/MacOS: `docker run --rm -it -v $(pwd):/root/env myos-buildenv`
-6. This should be enough to compile the kernel and build the ISO file.
-7. Install Qemu to test out the operating system.
-    - Windows: Install [chocolatey](https://chocolatey.org/) and run `choco install qemu`.
+2. Setup a package manager for your system (this will make it easier to install the required tools)
+    - Windows: Install [Chocolatey](https://chocolatey.org/install).
+    - MacOS: Install [Homebrew](https://brew.sh/).
+    - Linux: No need to install anything, you can use your distributions package manager.
+2. Install make for your OS. We'll be using this to automate our build system.
+    - Windows: From the command line, run `choco install make`.
+    - MacOS: From the terminal, run `brew install make`.
+    - Linux: Use your distributions package manager. For eg., on Ubuntu run `apt-get install make`.
+3. Install Qemu to test out the operating system.
+    - Windows: From the command line, run `choco install qemu`.
+    - MacOS: From the terminal, run `brew install qemu`.
     - Linux: Use your distributions package manager or follow the [install instructions](https://www.qemu.org/download/).
-    - MacOS: Install [homebrew](https://brew.sh/) and run `brew install qemu`.
+
+# Build Environment Setup
+1. Clone this repository. `cd` into the directory.
+2. Generate the build environment image by running by running `make env` (this might take a while).
+3. This should install all required tools (GCC cross compiler, xorisso, GRUB tools, nasm, the nightly Rust toolchain etc.)
 
 # Compiling and Running the OS
-1. Run the container you created from the Docker image (if you haven't already). Run the following commands in the container's shell:
+1. Firstly, run the build environment docker image: `make docker`.
+1. Run the following commands in the container's shell:
     - Compile the kernel: `make`.
     - Create the ISO image: `make iso`.
-2. To test the OS, run `qemu-system-x86_64 -cdrom build/os-x86_64` on your system shell.
-    - If you'd like to not type the above monstrocity out, install make on your system.
-    - Then you can run `make run` form your system shell.
+2. To test the OS, run `make run` on your system shell.
