@@ -5,8 +5,13 @@ edition = "2021"
 
 [dependencies]
 lazy_static = {version = "1.5.0", features = ["spin_no_std"]}
+linkme = "0.3.27"
 spin = "0.9.8"
 volatile = "0.2"
 
 [lib]
 crate-type = ["staticlib"]
+
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(testing)'] }
