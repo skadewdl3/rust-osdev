@@ -18,7 +18,7 @@
 
 # Build Environment Setup
 1. Clone this repository. `cd` into the directory.
-2. Generate the build environment image by running by running `make env` (this might take a while).
+2. Generate the build environment image by running `make env` (this might take a while).
 3. This should install all required tools (GCC cross compiler, xorisso, GRUB tools, nasm, the nightly Rust toolchain etc.)
 
 # Compiling and Running the OS
