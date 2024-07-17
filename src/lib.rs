@@ -1,5 +1,8 @@
 #![no_std]
 #![no_main]
+#![feature(abi_x86_interrupt)]
+
+pub mod interrupts;
 pub mod serial;
 pub mod tests;
 pub mod vga_buffer;
@@ -17,9 +20,13 @@ fn panic_handler(info: &PanicInfo) -> ! {
 
 #[no_mangle]
 pub extern "C" fn rust_main() {
+    println!("Hello World!");
+    interrupts::init_idt();
     #[cfg(testing)]
     test_runner();
-    println!("Hello World!");
+
+    println!("It did not crash");
+    loop {}
 }
 
 #[distributed_slice(crate::tests::TESTS)]
