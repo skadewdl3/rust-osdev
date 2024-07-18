@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+bit_field = "0.10.2"
 lazy_static = {version = "1.5.0", features = ["spin_no_std"]}
 linkme = "0.3.27"
 spin = "0.9.8"

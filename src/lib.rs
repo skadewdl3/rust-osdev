@@ -9,7 +9,6 @@ pub mod vga_buffer;
 
 use core::panic::PanicInfo;
 use linkme::distributed_slice;
-use tests::{exit_qemu, test_runner, Testable};
 
 #[panic_handler]
 #[cfg(not(testing))]
@@ -19,9 +18,11 @@ fn panic_handler(info: &PanicInfo) -> ! {
 }
 
 #[no_mangle]
-pub extern "C" fn rust_main() {
+pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
     println!("Hello World!");
-    interrupts::init_idt();
+
+    interrupts::init();
+    unsafe { core::arch::asm!("mov dx, 0", "div dx") }
     #[cfg(testing)]
     test_runner();
 

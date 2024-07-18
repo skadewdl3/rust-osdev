@@ -13,8 +13,8 @@ assembly_object_files := $(patsubst src/arch/$(arch)/%.asm, \
 buildenv_name := os_buildenv
 buildenv_source = buildenv
 
-qemu_args := -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio
-
+qemu_args := -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -d int -M smm=off
+qemu_debug_args := -s -S
 .PHONY: all clean run iso kernel test docker env
 
 all: $(kernel)
@@ -24,6 +24,9 @@ clean:
 
 run:
 	@qemu-system-x86_64 -cdrom $(iso) $(qemu_args)
+
+debug:
+	@qemu-system-x86_64 -cdrom $(iso) $(qemu_args) $(qemu_debug_args)
 
 # Targets for generating a release (tests disabled) iso
 iso: $(iso)

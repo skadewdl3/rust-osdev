@@ -1,6 +1,6 @@
 ; setting up the stack and page tables in bss
 section .bss
-align 4096
+align 4096 * 4
 p4_table:
   resb 4096
 p3_table:
@@ -26,7 +26,13 @@ extern long_mode_start
 section .text
 bits 32
 start:
+  ; esp must contain the location of the stack pointer
   mov esp, stack_top
+
+  ; GRUB will store the pointer to multiboot info struct in ebx
+  ; move the multiboot information pointer to edi, to pass it to the kernel_main function
+  mov edi, ebx
+
   call check_multiboot
   call check_cpuid
   call check_long_mode
