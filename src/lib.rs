@@ -22,6 +22,7 @@ pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
     println!("Hello World!");
 
     interrupts::init();
+    unsafe { core::arch::asm!("mov dx, 0", "div dx") }
     #[cfg(testing)]
     test_runner();
 
