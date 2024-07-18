@@ -43,16 +43,12 @@ pub fn test_runner() {
     exit_qemu(QemuExitCode::Success);
 }
 
+#[cfg(testing)]
+#[panic_handler]
 fn test_panic_handler(info: &PanicInfo) -> ! {
     serial_println!("[failed]\n");
 
     serial_println!("Error: {}\n", info);
     exit_qemu(QemuExitCode::Failed);
     loop {}
-}
-
-#[cfg(testing)]
-#[panic_handler]
-pub fn panic_handler(info: &PanicInfo) -> ! {
-    test_panic_handler(info)
 }

@@ -7,13 +7,61 @@ pub type HandlerFunc = extern "C" fn() -> !;
 
 pub struct Idt([Entry; 16]);
 
+#[allow(dead_code)]
+pub enum InterruptType {
+    DivideError,
+    Debug,
+    NMI,
+    Breakpoint,
+    Overflow,
+    BoundRangeExceeded,
+    InvalidOpcode,
+    DeviceNotAvailable,
+    DoubleFault,
+    InvaliddTss,
+    SegmentNotPresent,
+    GeneralProtectionFault,
+    PageFault,
+    X87FloatingPoint,
+    AlignmentCheck,
+    MachineCheck,
+    SimdFloatingPoint,
+    Virtualization,
+    SecurityException,
+}
+impl Into<u8> for InterruptType {
+    fn into(self) -> u8 {
+        match self {
+            Self::DivideError => 0,
+            Self::Debug => 1,
+            Self::NMI => 2,
+            Self::Breakpoint => 3,
+            Self::Overflow => 4,
+            Self::BoundRangeExceeded => 5,
+            Self::InvalidOpcode => 6,
+            Self::DeviceNotAvailable => 7,
+            Self::DoubleFault => 8,
+            Self::InvaliddTss => 10,
+            Self::SegmentNotPresent => 11,
+            Self::GeneralProtectionFault => 13,
+            Self::PageFault => 14,
+            Self::X87FloatingPoint => 16,
+            Self::AlignmentCheck => 17,
+            Self::MachineCheck => 18,
+            Self::SimdFloatingPoint => 19,
+            Self::Virtualization => 20,
+            Self::SecurityException => 30,
+        }
+    }
+}
+
 impl Idt {
     pub fn new() -> Idt {
         Idt([Entry::missing(); 16])
     }
 
-    pub fn set_handler(&mut self, entry: u8, handler: HandlerFunc) {
-        self.0[entry as usize] = Entry::new(segmentation::CS::get_reg(), handler);
+    pub fn set_handler(&mut self, entry: impl Into<u8>, handler: HandlerFunc) {
+        self.0[entry.into() as usize] = Entry::new(segmentation::CS::get_reg(), handler);
     }
 
     pub fn load(&self) {
