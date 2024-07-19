@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(abi_x86_interrupt)]
+#![feature(naked_functions)]
 
 pub mod interrupts;
 pub mod serial;
