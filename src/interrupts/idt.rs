@@ -3,7 +3,7 @@ use x86_64::registers::segmentation::{self, Segment};
 use x86_64::structures::gdt::SegmentSelector;
 use x86_64::{PrivilegeLevel, VirtAddr};
 
-pub type HandlerFunc = extern "C" fn() -> !;
+pub type HandlerFunc = extern "C" fn();
 
 pub struct Idt([Entry; 16]);
 

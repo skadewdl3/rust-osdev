@@ -35,12 +35,37 @@ bitflags::bitflags! {
 macro_rules! handler {
     ($name: ident) => {{
         #[naked]
-        extern "C" fn wrapper() -> ! {
+        extern "C" fn wrapper() {
             unsafe {
                 asm!(
                     "
-                    mov rdi, rsp
+                    push rax
+                    push rcx
+                    push rdx
+                    push rsi
+                    push rdi
+                    push r8
+                    push r9
+                    push r10
+                    push r11
+
+                    // to pass the exception stack frame pointer to the exception
+                    // handler
+                    mov rdi, rsp 
+                    add rdi, 9*8 // align the stack pointer
                     call {}
+                    
+                    pop rax
+                    pop rcx
+                    pop rdx
+                    pop rsi
+                    pop rdi
+                    pop r8
+                    pop r9
+                    pop r10
+                    pop r11
+
+                    iretq
                     ",
                     sym $name,
                     options(noreturn)
@@ -54,13 +79,41 @@ macro_rules! handler {
 macro_rules! handler_with_error_code {
     ($name: ident) => {{
         #[naked]
-        extern "C" fn wrapper() -> ! {
+        extern "C" fn wrapper() {
             unsafe {
                 asm!(
                     "
-                    pop rsi
-                    mov rdi, rsp
+                    push rax
+                    push rcx
+                    push rdx
+                    push rsi
+                    push rdi
+                    push r8
+                    push r9
+                    push r10
+                    push r11
+
+                    // load the error code into rsi
+                    // to pass it as second argument to the exception handler
+                    mov rsi, [rsp + 8*8]
+
+                    // to pass the exception stack frame pointer to the exception
+                    // handler
+                    mov rdi, rsp 
+                    add rdi, 9*8 // align the stack pointer
                     call {}
+                    
+                    pop rax
+                    pop rcx
+                    pop rdx
+                    pop rsi
+                    pop rdi
+                    pop r8
+                    pop r9
+                    pop r10
+                    pop r11
+
+                    iretq
                     ",
                     sym $name,
                     options(noreturn)
@@ -76,6 +129,7 @@ lazy_static::lazy_static! {
         let mut idt = idt::Idt::new();
         idt.set_handler(InterruptType::DivideError, handler!(divide_error_handler));
         idt.set_handler(InterruptType::InvalidOpcode, handler!(invalid_opcode_handler));
+        idt.set_handler(InterruptType::Breakpoint, handler!(breakpoint_handler));
         idt.set_handler(InterruptType::PageFault, handler_with_error_code!(page_fault_handler));
         idt
     };
@@ -84,6 +138,9 @@ lazy_static::lazy_static! {
 extern "C" fn divide_error_handler(stack_frame: &ExceptionStackFrame) {
     println!("EXCEPTION: DIVIDE BY ZERO\n{:#?}", stack_frame);
     loop {}
+}
+extern "C" fn breakpoint_handler(stack_frame: &ExceptionStackFrame) {
+    println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
 }
 
 extern "C" fn invalid_opcode_handler(stack_frame: &ExceptionStackFrame) {
@@ -99,9 +156,9 @@ extern "C" fn page_fault_handler(stack_frame: &ExceptionStackFrame, error_code: 
     println!(
         "\nEXCEPTION: PAGE FAULT while accessing {:#x}\
         \nerror code: {:?}\n{:#?}",
-        unsafe { Cr2::read_raw() },
+        Cr2::read_raw(),
         PageFaultErrorCode::from_bits(error_code).unwrap(),
-        unsafe { &*stack_frame }
+        stack_frame
     );
     loop {}
 }

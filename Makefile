@@ -1,7 +1,7 @@
 arch ?= x86_64
 kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
-rust_os := target/$(arch)-unknown-linux-gnu/debug/libos.a
+rust_os := target/$(arch)-os/debug/libos.a
 
 linker_script := src/arch/$(arch)/linker.ld
 grub_cfg := src/arch/$(arch)/grub.cfg

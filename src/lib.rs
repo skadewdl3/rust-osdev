@@ -10,6 +10,7 @@ pub mod vga_buffer;
 
 use core::panic::PanicInfo;
 use linkme::distributed_slice;
+use x86_64::instructions::interrupts::int3;
 
 #[panic_handler]
 #[cfg(not(testing))]
@@ -23,13 +24,10 @@ pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
     println!("Hello World!");
 
     interrupts::init();
+    // int3();
     unsafe { core::arch::asm!("mov dx, 0", "div dx") }
     #[cfg(testing)]
     test_runner();
-
-    let x = (1u64, 2u64, 3u64);
-    let y = Some(x);
-    for i in (0..100).map(|z| (z, z - 1)) {}
 
     println!("It did not crash");
     loop {}
