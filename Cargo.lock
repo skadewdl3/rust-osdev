@@ -70,6 +70,7 @@ name = "os"
 version = "0.1.0"
 dependencies = [
  "bit_field",
+ "bitflags 2.6.0",
  "lazy_static",
  "linkme",
  "spin",

@@ -13,7 +13,7 @@ assembly_object_files := $(patsubst src/arch/$(arch)/%.asm, \
 buildenv_name := os_buildenv
 buildenv_source = buildenv
 
-qemu_args := -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -d int -M smm=off
+qemu_args := -device isa-debug-exit,iobase=0xf4,iosize=0x04 -serial stdio -d cpu_reset -enable-kvm
 qemu_debug_args := -s -S
 .PHONY: all clean run iso kernel test docker env
 

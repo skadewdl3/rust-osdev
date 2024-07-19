@@ -27,6 +27,10 @@ pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
     #[cfg(testing)]
     test_runner();
 
+    let x = (1u64, 2u64, 3u64);
+    let y = Some(x);
+    for i in (0..100).map(|z| (z, z - 1)) {}
+
     println!("It did not crash");
     loop {}
 }
