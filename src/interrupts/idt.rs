@@ -3,7 +3,7 @@ use x86_64::registers::segmentation::{self, Segment};
 use x86_64::structures::gdt::SegmentSelector;
 use x86_64::{PrivilegeLevel, VirtAddr};
 
-pub type HandlerFunc = extern "C" fn() -> !;
+pub type HandlerFunc = extern "x86-interrupt" fn() -> !;
 
 pub struct Idt([Entry; 16]);
 
@@ -11,45 +11,50 @@ pub struct Idt([Entry; 16]);
 pub enum InterruptType {
     DivideError,
     Debug,
-    NMI,
+    NonMaskableInterrupt,
     Breakpoint,
     Overflow,
     BoundRangeExceeded,
     InvalidOpcode,
     DeviceNotAvailable,
+    CoprocessorSegmentOverrun,
+    X87FloatingPoint,
+    SimdFloatingPoint,
+    Virtualization,
+    HvInjectionException,
     DoubleFault,
     InvaliddTss,
     SegmentNotPresent,
     GeneralProtectionFault,
     PageFault,
-    X87FloatingPoint,
     AlignmentCheck,
-    MachineCheck,
-    SimdFloatingPoint,
-    Virtualization,
+    // MachineCheck,
     SecurityException,
 }
+
 impl Into<u8> for InterruptType {
     fn into(self) -> u8 {
         match self {
             Self::DivideError => 0,
             Self::Debug => 1,
-            Self::NMI => 2,
+            Self::NonMaskableInterrupt => 2,
             Self::Breakpoint => 3,
             Self::Overflow => 4,
             Self::BoundRangeExceeded => 5,
             Self::InvalidOpcode => 6,
             Self::DeviceNotAvailable => 7,
             Self::DoubleFault => 8,
+            Self::CoprocessorSegmentOverrun => 9,
             Self::InvaliddTss => 10,
             Self::SegmentNotPresent => 11,
             Self::GeneralProtectionFault => 13,
             Self::PageFault => 14,
             Self::X87FloatingPoint => 16,
             Self::AlignmentCheck => 17,
-            Self::MachineCheck => 18,
+            // Self::MachineCheck => 18,
             Self::SimdFloatingPoint => 19,
             Self::Virtualization => 20,
+            Self::HvInjectionException => 28,
             Self::SecurityException => 30,
         }
     }

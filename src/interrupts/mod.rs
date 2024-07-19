@@ -1,3 +1,5 @@
+use core::arch::asm;
+
 use idt::InterruptType;
 
 mod idt;
@@ -10,13 +12,17 @@ lazy_static::lazy_static! {
         idt
     };
 }
-
-extern "C" fn divide_error_handler() -> ! {
-    crate::println!("EXCEPTION: DIVIDE BY ZERO");
+extern "x86-interrupt" fn divide_error_handler() -> ! {
+    let mut x: u64 = 0;
+    unsafe {
+        asm!("mov {}, rsp", out(reg) x);
+        let stack_frame = *(x as *const ExceptionStackFrame);
+        crate::println!("EXCEPTION: DIVIDE BY ZERO\n{:#?}", stack_frame);
+    }
     loop {}
 }
 
-extern "C" fn breakpoint_handler() -> ! {
+extern "x86-interrupt" fn breakpoint_handler() -> ! {
     crate::println!("EXCEPTION: BREAKPOINT");
     loop {}
 }
@@ -26,6 +32,7 @@ pub fn init() {
 }
 
 #[repr(C)]
+#[derive(Debug, Default, Copy, Clone)]
 struct ExceptionStackFrame {
     instruction_pointer: u64,
     code_segment: u64,

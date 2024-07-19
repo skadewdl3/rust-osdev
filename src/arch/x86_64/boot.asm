@@ -1,6 +1,6 @@
 ; setting up the stack and page tables in bss
 section .bss
-align 4096 * 4
+align 4096
 p4_table:
   resb 4096
 p3_table:
@@ -8,7 +8,7 @@ p3_table:
 p2_table:
   resb 4096
 stack_bottom:
-  resb 64
+  resb 4096 * 4
 stack_top:
 
 ; Setting up GDT in the read only data section
