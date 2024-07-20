@@ -9,6 +9,15 @@ SECTIONS {
   }
   .text :
   {
-    *(.text)
+    *(.text .text.*)
+  }
+  .rodata :
+  {
+    *(.rodata .rodata.*)
+  }
+
+  .data.rel.ro :
+  {
+    *(.data.rel.ro .data.rel.ro.*)
   }
 }

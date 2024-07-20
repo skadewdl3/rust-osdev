@@ -4,7 +4,7 @@
 #![allow(internal_features)]
 
 pub mod interrupts;
-pub mod paging;
+pub mod memory;
 pub mod panic;
 pub mod serial;
 pub mod tests;

@@ -28,6 +28,8 @@ fn panic_handler(info: &PanicInfo) -> ! {
     loop {}
 }
 
+// TODO: Implement panic_print from https://github.com/thepowersgang/rust-barebones-kernel/blob/master/Kernel/unwind.rs
+
 // fn panic_print(fmt: core::fmt::Arguments, file: &'static str, line: u32) {
 //     #[cfg(testing)]
 //     {
