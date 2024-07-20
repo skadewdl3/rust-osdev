@@ -4,6 +4,7 @@
 #![feature(naked_functions)]
 
 pub mod interrupts;
+pub mod paging;
 pub mod serial;
 pub mod tests;
 pub mod vga_buffer;
@@ -23,9 +24,14 @@ fn panic_handler(info: &PanicInfo) -> ! {
 pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
     println!("Hello World!");
 
+    paging::init();
     interrupts::init();
-    // int3();
-    unsafe { core::arch::asm!("mov dx, 0", "div dx") }
+
+    let ptr = 0xdeadbeaf as *mut u8;
+    unsafe {
+        *ptr = 42;
+    }
+
     #[cfg(testing)]
     test_runner();
 

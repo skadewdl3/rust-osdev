@@ -95,12 +95,12 @@ macro_rules! handler_with_error_code {
 
                     // load the error code into rsi
                     // to pass it as second argument to the exception handler
-                    mov rsi, [rsp + 8*8]
+                    mov rsi, [rsp + 9*8]
 
                     // to pass the exception stack frame pointer to the exception
                     // handler
                     mov rdi, rsp 
-                    add rdi, 9*8 // align the stack pointer
+                    add rdi, 10*8 // align the stack pointer
                     call {}
                     
                     pop rax
@@ -130,7 +130,8 @@ lazy_static::lazy_static! {
         idt.set_handler(InterruptType::DivideError, handler!(divide_error_handler));
         idt.set_handler(InterruptType::InvalidOpcode, handler!(invalid_opcode_handler));
         idt.set_handler(InterruptType::Breakpoint, handler!(breakpoint_handler));
-        idt.set_handler(InterruptType::PageFault, handler_with_error_code!(page_fault_handler));
+        // idt.set_handler(InterruptType::PageFault, handler_with_error_code!(page_fault_handler));
+        idt.set_handler(InterruptType::DoubleFault, handler_with_error_code!(double_fault_handler));
         idt
     };
 }
@@ -147,6 +148,14 @@ extern "C" fn invalid_opcode_handler(stack_frame: &ExceptionStackFrame) {
     println!(
         "\nEXCEPTION: INVALID OPCODE at {:#x}\n{:#?}",
         stack_frame.instruction_pointer, stack_frame
+    );
+    loop {}
+}
+
+extern "C" fn double_fault_handler(stack_frame: &ExceptionStackFrame, error_code: u64) {
+    println!(
+        "\nEXCEPTION: DOUBLE FAULT\nerror code: {:?}\n{:#?}",
+        error_code, stack_frame
     );
     loop {}
 }
