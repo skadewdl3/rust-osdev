@@ -1,36 +1,23 @@
 #![no_std]
 #![no_main]
-#![feature(abi_x86_interrupt)]
-#![feature(naked_functions)]
+#![feature(abi_x86_interrupt, naked_functions, lang_items)]
+#![allow(internal_features)]
 
 pub mod interrupts;
 pub mod paging;
+pub mod panic;
 pub mod serial;
 pub mod tests;
 pub mod vga_buffer;
 
-use core::panic::PanicInfo;
 use linkme::distributed_slice;
-use x86_64::instructions::interrupts::int3;
-
-#[panic_handler]
-#[cfg(not(testing))]
-fn panic_handler(info: &PanicInfo) -> ! {
-    println!("{}", info);
-    loop {}
-}
 
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
     println!("Hello World!");
 
-    paging::init();
+    paging::init(multiboot_info_ptr);
     interrupts::init();
-
-    let ptr = 0xdeadbeaf as *mut u8;
-    unsafe {
-        *ptr = 42;
-    }
 
     #[cfg(testing)]
     test_runner();

@@ -1,23 +1,10 @@
 use crate::*;
+use crate::{println, serial_println};
 use linkme::distributed_slice;
+use panic::{exit_qemu, QemuExitCode};
 
 #[distributed_slice]
 pub static TESTS: [fn()];
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u32)]
-pub enum QemuExitCode {
-    Success = 0x10,
-    Failed = 0x11,
-}
-
-pub fn exit_qemu(exit_code: QemuExitCode) {
-    use x86_64::instructions::port::Port;
-    unsafe {
-        let mut port = Port::new(0xf4);
-        port.write(exit_code as u32);
-    }
-}
 
 pub trait Testable {
     fn run(&self) -> ();
@@ -30,25 +17,15 @@ where
     fn run(&self) {
         // crate::serial_print!("{}...\t", core::any::type_name::<T>());
         self();
-        crate::serial_print!("...\t");
-        crate::serial_println!("[ok]");
+        serial_print!("...\t");
+        serial_println!("[ok]");
     }
 }
 
 pub fn test_runner() {
-    crate::serial_println!("Running {} tests", TESTS.len());
+    serial_println!("Running {} tests", TESTS.len());
     for test in TESTS {
         test.run();
     }
     exit_qemu(QemuExitCode::Success);
-}
-
-#[cfg(testing)]
-#[panic_handler]
-fn test_panic_handler(info: &PanicInfo) -> ! {
-    serial_println!("[failed]\n");
-
-    serial_println!("Error: {}\n", info);
-    exit_qemu(QemuExitCode::Failed);
-    loop {}
 }

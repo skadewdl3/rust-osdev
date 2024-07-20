@@ -130,7 +130,7 @@ lazy_static::lazy_static! {
         idt.set_handler(InterruptType::DivideError, handler!(divide_error_handler));
         idt.set_handler(InterruptType::InvalidOpcode, handler!(invalid_opcode_handler));
         idt.set_handler(InterruptType::Breakpoint, handler!(breakpoint_handler));
-        // idt.set_handler(InterruptType::PageFault, handler_with_error_code!(page_fault_handler));
+        idt.set_handler(InterruptType::PageFault, handler_with_error_code!(page_fault_handler));
         idt.set_handler(InterruptType::DoubleFault, handler_with_error_code!(double_fault_handler));
         idt
     };
