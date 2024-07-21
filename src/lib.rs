@@ -3,6 +3,7 @@
 #![feature(abi_x86_interrupt, naked_functions, lang_items)]
 #![allow(internal_features)]
 
+pub mod framebuffer;
 pub mod interrupts;
 pub mod memory;
 pub mod panic;
@@ -16,8 +17,9 @@ use linkme::distributed_slice;
 pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
     println!("Hello World!");
 
-    paging::init(multiboot_info_ptr);
+    memory::init(multiboot_info_ptr);
     interrupts::init();
+    framebuffer::init(multiboot_info_ptr);
 
     #[cfg(testing)]
     test_runner();

@@ -1,18 +1,19 @@
 pub mod area_frame_allocator;
 
+use area_frame_allocator::AreaFrameAllocator;
 use multiboot2::BootInformationHeader;
 
 use crate::println;
 
-pub const PAGE_SIZE: usize = 4096; // 4KB
+pub const PAGE_SIZE: u64 = 4096; // 4KB
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Frame {
-    number: usize,
+    number: u64,
 }
 
 impl Frame {
-    fn containing_address(address: usize) -> Frame {
+    fn containing_address(address: u64) -> Frame {
         Frame {
             number: address / PAGE_SIZE,
         }
@@ -30,8 +31,8 @@ pub fn init(multiboot_info_ptr: usize) {
             .unwrap()
     };
 
-    let multiboot_start = multiboot_info_ptr;
-    let multiboot_end = multiboot_info_ptr + boot_info.total_size();
+    let multiboot_start = multiboot_info_ptr as u64;
+    let multiboot_end = (multiboot_info_ptr + boot_info.total_size()) as u64;
 
     let kernel_start = boot_info
         .elf_sections()
@@ -45,4 +46,16 @@ pub fn init(multiboot_info_ptr: usize) {
         .map(|s| s.start_address())
         .max()
         .unwrap();
+
+    let memory_areas = boot_info.memory_map_tag().unwrap().memory_areas();
+
+    let mut frame_allocator = AreaFrameAllocator::new(
+        kernel_start,
+        kernel_end,
+        multiboot_start,
+        multiboot_end,
+        memory_areas,
+    );
+
+    println!("{:?}", frame_allocator.allocate_frame());
 }
