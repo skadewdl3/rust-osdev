@@ -1,11 +1,9 @@
 pub mod area_frame_allocator;
-
-use area_frame_allocator::AreaFrameAllocator;
-use multiboot2::BootInformationHeader;
+pub mod paging;
 
 use crate::println;
-
-pub const PAGE_SIZE: u64 = 4096; // 4KB
+use area_frame_allocator::AreaFrameAllocator;
+use multiboot2::BootInformationHeader;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Frame {
@@ -17,6 +15,10 @@ impl Frame {
         Frame {
             number: address / PAGE_SIZE,
         }
+    }
+
+    pub fn start_address(&self) -> u64 {
+        self.number * PAGE_SIZE
     }
 }
 
@@ -58,4 +60,6 @@ pub fn init(multiboot_info_ptr: usize) {
     );
 
     println!("{:?}", frame_allocator.allocate_frame());
+
+    paging::init()
 }

@@ -38,6 +38,12 @@ start:
   call check_long_mode
 
   call set_up_page_tables
+
+  ; setup recursive paging
+  mov eax, p4_table
+  or eax, 0b11 ; present + writable
+  mov [p4_table + 511 * 8], eax
+  
   call enable_paging
   lgdt [gdt64.pointer]
 
@@ -57,6 +63,7 @@ error:
 enable_paging:
   ; load P4 to cr3 register (cpu uses this to access the P4 table)
   mov eax, p4_table
+
   mov cr3, eax
 
   ; enable PAE-flag in cr4 (Physical Address Extension)
