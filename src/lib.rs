@@ -2,6 +2,7 @@
 #![no_main]
 #![feature(abi_x86_interrupt, naked_functions, lang_items)]
 #![allow(internal_features)]
+#![feature(ptr_internals)]
 
 pub mod framebuffer;
 pub mod interrupts;
@@ -14,22 +15,23 @@ pub mod vga_buffer;
 use core::arch::asm;
 
 use linkme::distributed_slice;
+use memory::area_frame_allocator::AreaFrameAllocator;
 
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
     println!("Hello World!");
 
-    memory::init(multiboot_info_ptr);
     interrupts::init();
-    unsafe {
-        asm!("int 0x3");
-    }
-    framebuffer::init(multiboot_info_ptr);
+    memory::init(multiboot_info_ptr);
+
+    // TODO: Get framebuffer working
+    // framebuffer::init(multiboot_info_ptr);
 
     #[cfg(testing)]
     test_runner();
 
     println!("It did not crash");
+
     loop {}
 }
 

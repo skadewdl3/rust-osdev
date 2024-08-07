@@ -63,5 +63,5 @@ pub fn init(multiboot_info_ptr: usize) {
 
     println!("{:?}", frame_allocator.allocate_frame());
 
-    paging::init()
+    paging::test_paging(&mut frame_allocator)
 }
