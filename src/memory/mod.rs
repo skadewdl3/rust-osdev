@@ -5,6 +5,8 @@ use crate::println;
 use area_frame_allocator::AreaFrameAllocator;
 use multiboot2::BootInformationHeader;
 
+pub const PAGE_SIZE: u64 = 4096; // 4KB
+
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Frame {
     number: u64,

@@ -11,6 +11,8 @@ pub mod serial;
 pub mod tests;
 pub mod vga_buffer;
 
+use core::arch::asm;
+
 use linkme::distributed_slice;
 
 #[no_mangle]
@@ -19,6 +21,9 @@ pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
 
     memory::init(multiboot_info_ptr);
     interrupts::init();
+    unsafe {
+        asm!("int 0x3");
+    }
     framebuffer::init(multiboot_info_ptr);
 
     #[cfg(testing)]

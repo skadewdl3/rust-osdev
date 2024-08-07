@@ -1,5 +1,7 @@
+use crate::memory::paging::PAGE_SIZE;
 use crate::memory::Frame;
-use crate::memory::PAGE_SIZE;
+
+use super::VirtAddr;
 
 bitflags::bitflags! {
     pub struct EntryFlags: u64 {
@@ -20,6 +22,36 @@ pub struct Page {
     number: usize,
 }
 
+impl Page {
+    pub fn containing_address(address: VirtAddr) -> Page {
+        assert!(
+            address < 0x0000_8000_0000_0000 || address >= 0xffff_8000_0000_0000,
+            "invalid address: 0x{:x}",
+            address
+        );
+        Page {
+            number: address / PAGE_SIZE as usize,
+        }
+    }
+
+    fn start_address(&self) -> usize {
+        self.number * PAGE_SIZE as usize
+    }
+
+    pub fn p4_index(&self) -> usize {
+        (self.number >> 27) & 0o777
+    }
+    pub fn p3_index(&self) -> usize {
+        (self.number >> 18) & 0o777
+    }
+    pub fn p2_index(&self) -> usize {
+        (self.number >> 9) & 0o777
+    }
+    pub fn p1_index(&self) -> usize {
+        (self.number >> 0) & 0o777
+    }
+}
+
 pub struct Entry(u64);
 
 impl Entry {
@@ -35,11 +67,9 @@ impl Entry {
         EntryFlags::from_bits_truncate(self.0)
     }
 
-    pub fn pointer_frame(&self) -> Option<Frame> {
+    pub fn pointed_frame(&self) -> Option<Frame> {
         if self.flags().contains(EntryFlags::PRESENT) {
-            Some(Frame::containing_address(
-                self.0 as usize & 0x000fffff_fffff000,
-            ))
+            Some(Frame::containing_address(self.0 & 0x000fffff_fffff000))
         } else {
             None
         }
