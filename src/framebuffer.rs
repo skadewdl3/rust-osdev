@@ -1,4 +1,4 @@
-use crate::{println, serial_println};
+use crate::serial_println;
 use multiboot2::{BootInformation, BootInformationHeader};
 
 /*

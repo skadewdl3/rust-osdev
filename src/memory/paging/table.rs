@@ -1,4 +1,4 @@
-use crate::memory::FrameAllocator;
+use crate::memory::frame::FrameAllocator;
 
 use super::{
     entry::{Entry, EntryFlags},
@@ -13,9 +13,13 @@ pub const P4: *mut Table<Level4> = 0xffffffff_fffff000 as *mut _;
 
 pub trait TableLevel {}
 
+#[derive(Debug)]
 pub enum Level4 {}
+#[derive(Debug)]
 pub enum Level3 {}
+#[derive(Debug)]
 pub enum Level2 {}
+#[derive(Debug)]
 pub enum Level1 {}
 
 impl TableLevel for Level4 {}
@@ -39,6 +43,7 @@ impl HierarchicalLevel for Level2 {
     type NextLevel = Level1;
 }
 
+#[derive(Debug)]
 pub struct Table<L: TableLevel> {
     entries: [Entry; PAGE_TABLE_ENTRY_COUNT],
     level: PhantomData<L>,
@@ -75,6 +80,7 @@ impl<L: TableLevel> Table<L> {
 impl<L: HierarchicalLevel> Table<L> {
     fn next_table_address(&self, index: usize) -> Option<usize> {
         let entry_flags = self[index].flags();
+        crate::serial_println!("Entry flags: {:?}", entry_flags);
         if entry_flags.contains(EntryFlags::PRESENT) && !entry_flags.contains(EntryFlags::HUGE_PAGE)
         {
             let table_address = self as *const _ as usize;

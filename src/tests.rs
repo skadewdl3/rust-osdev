@@ -1,5 +1,5 @@
+use crate::serial_println;
 use crate::*;
-use crate::{println, serial_println};
 use linkme::distributed_slice;
 use panic::{exit_qemu, QemuExitCode};
 

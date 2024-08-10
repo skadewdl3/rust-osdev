@@ -1,4 +1,4 @@
-use crate::memory::{Frame, FrameAllocator};
+use crate::memory::frame::{Frame, FrameAllocator};
 use multiboot2::MemoryArea;
 
 pub struct AreaFrameAllocator<'a> {
@@ -14,10 +14,7 @@ pub struct AreaFrameAllocator<'a> {
 impl<'a> FrameAllocator for AreaFrameAllocator<'a> {
     fn allocate_frame(&mut self) -> Option<Frame> {
         if let Some(area) = self.current_area {
-            let frame = Frame {
-                number: self.next_free_frame.number,
-            };
-
+            let frame = Frame::new(self.next_free_frame.number);
             let current_area_last_frame = {
                 let address = area.start_address() + area.size() - 1;
                 Frame::containing_address(address)
@@ -48,7 +45,7 @@ impl<'a> FrameAllocator for AreaFrameAllocator<'a> {
         }
     }
 
-    fn deallocate_frame(&mut self, frame: Frame) {
+    fn deallocate_frame(&mut self, _frame: Frame) {
         unimplemented!()
     }
 }

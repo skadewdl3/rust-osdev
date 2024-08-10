@@ -1,33 +1,14 @@
 pub mod area_frame_allocator;
+pub mod frame;
 pub mod paging;
+pub mod tiny_frame_allocator;
 
 use crate::println;
 use area_frame_allocator::AreaFrameAllocator;
+use frame::FrameAllocator;
 use multiboot2::BootInformationHeader;
 
 pub const PAGE_SIZE: u64 = 4096; // 4KB
-
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Frame {
-    number: u64,
-}
-
-impl Frame {
-    fn containing_address(address: u64) -> Frame {
-        Frame {
-            number: address / PAGE_SIZE,
-        }
-    }
-
-    pub fn start_address(&self) -> u64 {
-        self.number * PAGE_SIZE
-    }
-}
-
-pub trait FrameAllocator {
-    fn allocate_frame(&mut self) -> Option<Frame>;
-    fn deallocate_frame(&mut self, frame: Frame);
-}
 
 pub fn init(multiboot_info_ptr: usize) {
     let boot_info = unsafe {
@@ -63,5 +44,5 @@ pub fn init(multiboot_info_ptr: usize) {
 
     println!("{:?}", frame_allocator.allocate_frame());
 
-    paging::test_paging(&mut frame_allocator)
+    paging::init(&mut frame_allocator, &boot_info)
 }

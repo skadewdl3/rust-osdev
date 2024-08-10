@@ -15,7 +15,6 @@ pub mod vga_buffer;
 use core::arch::asm;
 
 use linkme::distributed_slice;
-use memory::area_frame_allocator::AreaFrameAllocator;
 
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
