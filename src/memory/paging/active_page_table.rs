@@ -58,4 +58,25 @@ impl ActivePageTable {
 
         temporary_page.unmap(self);
     }
+
+    pub fn switch(&mut self, new_table: InactivePageTable) -> InactivePageTable {
+        use x86_64::addr::PhysAddr;
+        use x86_64::registers::control::Cr3;
+        use x86_64::structures::paging::PhysFrame;
+
+        let (old_table_frame, old_flags) = Cr3::read();
+        let old_address = old_table_frame.start_address().as_u64();
+        let old_table = InactivePageTable {
+            p4_frame: Frame::containing_address(old_address),
+        };
+
+        let new_address = new_table.p4_frame.start_address() as u64;
+        let x = PhysAddr::new(new_address);
+        let new_table_frame = PhysFrame::containing_address(x);
+
+        unsafe {
+            Cr3::write(new_table_frame, old_flags);
+        }
+        old_table
+    }
 }

@@ -10,6 +10,25 @@ use multiboot2::BootInformationHeader;
 
 pub const PAGE_SIZE: u64 = 4096; // 4KB
 
+fn enable_bits() {
+    // Enable nxe bit in the efer register
+    // This bit is set to prevent the execution of code on the stack
+    use x86_64::registers::model_specific::Efer;
+
+    let nxe_bit = 1 << 11;
+    unsafe {
+        let efer = Efer::read_raw();
+        // let efer = rdmsr(IA32_EFER);
+        // wrmsr(IA32_EFER, efer | nxe_bit);
+        Efer::write_raw(efer | nxe_bit);
+    }
+
+    // Enable write protect bit in the cr0 register
+
+    use x86_64::registers::control::{Cr0, Cr0Flags};
+    unsafe { Cr0::write(Cr0Flags::all() | Cr0Flags::WRITE_PROTECT) }
+}
+
 pub fn init(multiboot_info_ptr: usize) {
     let boot_info = unsafe {
         multiboot2::BootInformation::load(multiboot_info_ptr as *const BootInformationHeader)
@@ -44,5 +63,6 @@ pub fn init(multiboot_info_ptr: usize) {
 
     println!("{:?}", frame_allocator.allocate_frame());
 
+    enable_bits();
     paging::init(&mut frame_allocator, &boot_info)
 }

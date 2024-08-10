@@ -31,6 +31,7 @@ pub fn remap_kernel<A: FrameAllocator>(allocator: &mut A, boot_info: &BootInform
     active_table.with(&mut new_table, &mut temporary_page, |mapper| {
         let elf_sections = boot_info.elf_sections().unwrap();
 
+        // Identity map elf sections
         for section in elf_sections {
             use self::entry::EntryFlags;
 
@@ -55,15 +56,34 @@ pub fn remap_kernel<A: FrameAllocator>(allocator: &mut A, boot_info: &BootInform
                 section.size()
             );
 
-            let flags = EntryFlags::WRITABLE; // TODO use real section flags
-
+            let flags = EntryFlags::from_elf_section_flags(&section);
             let start_frame = Frame::containing_address(section.start_address());
             let end_frame = Frame::containing_address(section.end_address() - 1);
             for frame in Frame::range_inclusive(start_frame, end_frame) {
                 mapper.identity_map(frame, flags, allocator);
             }
         }
+
+        // Identity map VGA buffer
+        let vga_buffer_frame = Frame::containing_address(0xb8000);
+        mapper.identity_map(vga_buffer_frame, EntryFlags::WRITABLE, allocator);
+
+        // Identity map the Multiboot info struct
+        let multiboot_start = Frame::containing_address(boot_info.start_address() as u64);
+        let multiboot_end = Frame::containing_address((boot_info.end_address() - 1) as u64);
+        for frame in Frame::range_inclusive(multiboot_start, multiboot_end) {
+            mapper.identity_map(frame, EntryFlags::PRESENT, allocator);
+        }
     });
+
+    let old_table = active_table.switch(new_table);
+
+    // Turn the old P4 table into a guard page
+    let old_p4_page = Page::containing_address(old_table.p4_frame.start_address() as usize);
+    active_table.unmap(old_p4_page, allocator);
+    println!("guard page at {:#x}", old_p4_page.start_address());
+
+    println!("Switched to new page table!");
 }
 
 pub fn test_paging<A: FrameAllocator>(allocator: &mut A) {

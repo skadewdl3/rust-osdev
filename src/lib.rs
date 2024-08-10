@@ -23,6 +23,11 @@ pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
     interrupts::init();
     memory::init(multiboot_info_ptr);
 
+    // fn stack_overflow() {
+    //     let x = [0; 99999];
+    // }
+    // stack_overflow();
+
     // TODO: Get framebuffer working
     // framebuffer::init(multiboot_info_ptr);
 
