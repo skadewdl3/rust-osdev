@@ -1,8 +1,15 @@
 #![no_std]
 #![no_main]
-#![feature(abi_x86_interrupt, naked_functions, lang_items)]
+#![feature(
+    abi_x86_interrupt,
+    naked_functions,
+    lang_items,
+    ptr_internals,
+    allocator_api
+)]
 #![allow(internal_features)]
-#![feature(ptr_internals)]
+
+extern crate alloc;
 
 pub mod framebuffer;
 pub mod interrupts;
@@ -12,8 +19,8 @@ pub mod serial;
 pub mod tests;
 pub mod vga_buffer;
 
+use alloc::boxed::Box;
 use core::arch::asm;
-
 use linkme::distributed_slice;
 
 #[no_mangle]
@@ -33,6 +40,8 @@ pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
 
     #[cfg(testing)]
     test_runner();
+
+    let x = Box::new(42);
 
     println!("It did not crash");
 

@@ -1,4 +1,4 @@
-use super::frame::{Frame, FrameAllocator};
+use crate::memory::frame::{Frame, FrameAllocator};
 
 pub struct TinyFrameAllocator([Option<Frame>; 3]);
 

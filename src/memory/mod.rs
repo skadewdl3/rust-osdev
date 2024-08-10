@@ -1,11 +1,9 @@
-pub mod area_frame_allocator;
 pub mod frame;
+pub mod heap;
 pub mod paging;
-pub mod tiny_frame_allocator;
 
 use crate::println;
-use area_frame_allocator::AreaFrameAllocator;
-use frame::FrameAllocator;
+use frame::{AreaFrameAllocator, FrameAllocator};
 use multiboot2::BootInformationHeader;
 
 pub const PAGE_SIZE: u64 = 4096; // 4KB
@@ -60,8 +58,6 @@ pub fn init(multiboot_info_ptr: usize) {
         multiboot_end,
         memory_areas,
     );
-
-    println!("{:?}", frame_allocator.allocate_frame());
 
     enable_bits();
     paging::init(&mut frame_allocator, &boot_info)

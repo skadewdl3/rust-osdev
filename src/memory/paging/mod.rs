@@ -81,8 +81,7 @@ pub fn remap_kernel<A: FrameAllocator>(allocator: &mut A, boot_info: &BootInform
     // Turn the old P4 table into a guard page
     let old_p4_page = Page::containing_address(old_table.p4_frame.start_address() as usize);
     active_table.unmap(old_p4_page, allocator);
-    println!("guard page at {:#x}", old_p4_page.start_address());
-
+    println!("Guard page at {:#x}", old_p4_page.start_address());
     println!("Switched to new page table!");
 }
 
@@ -114,6 +113,5 @@ pub fn test_paging<A: FrameAllocator>(allocator: &mut A) {
 }
 
 pub fn init(allocator: &mut impl FrameAllocator, boot_info: &BootInformation) {
-    // test_paging(allocator);
     remap_kernel(allocator, boot_info);
 }

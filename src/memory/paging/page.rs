@@ -4,9 +4,8 @@ use super::{
     PAGE_SIZE,
 };
 use crate::memory::{
-    frame::{Frame, FrameAllocator},
+    frame::{Frame, FrameAllocator, TinyFrameAllocator},
     paging::entry::EntryFlags,
-    tiny_frame_allocator::TinyFrameAllocator,
 };
 
 use super::VirtAddr;
