@@ -54,8 +54,6 @@ impl ActivePageTable {
         p4_table[511].set(backup_frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
         tlb::flush_all();
 
-        crate::serial_println!("page from with {}", temporary_page.page.p4_index());
-
         temporary_page.unmap(self);
     }
 

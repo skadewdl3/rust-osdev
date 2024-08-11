@@ -80,7 +80,6 @@ impl<L: TableLevel> Table<L> {
 impl<L: HierarchicalLevel> Table<L> {
     fn next_table_address(&self, index: usize) -> Option<usize> {
         let entry_flags = self[index].flags();
-        // crate::serial_println!("Entry flags: {:?}", entry_flags);
         if entry_flags.contains(EntryFlags::PRESENT) && !entry_flags.contains(EntryFlags::HUGE_PAGE)
         {
             let table_address = self as *const _ as usize;

@@ -9,6 +9,7 @@
 )]
 #![allow(internal_features)]
 
+#[macro_use]
 extern crate alloc;
 
 pub mod framebuffer;
@@ -16,10 +17,13 @@ pub mod interrupts;
 pub mod memory;
 pub mod panic;
 pub mod serial;
-pub mod tests;
 pub mod vga_buffer;
 
-use alloc::boxed::Box;
+#[cfg(testing)]
+#[allow(unused_imports)]
+pub mod tests;
+
+use alloc::{boxed::Box, rc::Rc, vec::Vec};
 use core::arch::asm;
 use linkme::distributed_slice;
 
@@ -30,26 +34,37 @@ pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
     interrupts::init();
     memory::init(multiboot_info_ptr);
 
-    // fn stack_overflow() {
-    //     let x = [0; 99999];
-    // }
-    // stack_overflow();
-
     // TODO: Get framebuffer working
     // framebuffer::init(multiboot_info_ptr);
 
-    #[cfg(testing)]
-    test_runner();
+    // Testing the heap
+    let heap_value = Box::new(42);
+    println!("heap_value at {:p}", heap_value);
 
-    let x = Box::new(42);
+    // create a dynamically sized vector
+    let mut vec = Vec::new();
+    for i in 0..500 {
+        vec.push(i);
+    }
+    println!("vec at {:p}", vec.as_slice());
+
+    // create a reference counted vector -> will be freed when count reaches 0
+    let reference_counted = Rc::new(vec![1, 2, 3]);
+    let cloned_reference = reference_counted.clone();
+    println!(
+        "current reference count is {}",
+        Rc::strong_count(&cloned_reference)
+    );
+    core::mem::drop(reference_counted);
+    println!(
+        "reference count is {} now",
+        Rc::strong_count(&cloned_reference)
+    );
+
+    #[cfg(testing)]
+    tests::test_runner();
 
     println!("It did not crash");
 
     loop {}
-}
-
-#[distributed_slice(crate::tests::TESTS)]
-fn test1() {
-    serial_print!("Test 1");
-    assert_eq!(1, 1);
 }

@@ -9,7 +9,7 @@ use crate::memory::{
 };
 
 use super::VirtAddr;
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Page {
     number: usize,
 }
@@ -45,6 +45,29 @@ impl Page {
     pub fn p1_index(&self) -> usize {
         (self.number >> 0) & 0o777
     }
+
+    pub fn range_inclusive(start: Page, end: Page) -> PageIter {
+        PageIter { start, end }
+    }
+}
+
+pub struct PageIter {
+    start: Page,
+    end: Page,
+}
+
+impl Iterator for PageIter {
+    type Item = Page;
+
+    fn next(&mut self) -> Option<Page> {
+        if self.start <= self.end {
+            let page = self.start.clone();
+            self.start.number += 1;
+            Some(page)
+        } else {
+            None
+        }
+    }
 }
 
 pub struct TemporaryPage {
@@ -65,7 +88,6 @@ impl TemporaryPage {
             active_table.translate_page(self.page).is_none(),
             "temporary page is already mapped"
         );
-        crate::serial_println!("From map {}", self.page.p4_index());
         active_table.map_to(self.page, frame, EntryFlags::WRITABLE, &mut self.allocator);
         self.page.start_address()
     }

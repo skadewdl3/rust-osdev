@@ -1,6 +1,6 @@
 use core::panic::PanicInfo;
 
-use crate::println;
+use crate::{println, serial_println};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u32)]

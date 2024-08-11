@@ -1,31 +1,35 @@
+// pub mod vga_buffer;
+
 use crate::serial_println;
 use crate::*;
-use linkme::distributed_slice;
 use panic::{exit_qemu, QemuExitCode};
+use vga_buffer::*;
 
-#[distributed_slice]
+#[linkme::distributed_slice]
 pub static TESTS: [fn()];
 
-pub trait Testable {
-    fn run(&self) -> ();
-}
-
-impl<T> Testable for T
-where
-    T: Fn(),
-{
-    fn run(&self) {
-        // crate::serial_print!("{}...\t", core::any::type_name::<T>());
-        self();
-        serial_print!("...\t");
-        serial_println!("[ok]");
-    }
-}
-
 pub fn test_runner() {
-    serial_println!("Running {} tests", TESTS.len());
+    serial_println!("Running {} tests\n", TESTS.len());
     for test in TESTS {
-        test.run();
+        test();
     }
     exit_qemu(QemuExitCode::Success);
+}
+
+#[macro_export]
+macro_rules! test_cases {
+    (
+        $(
+            fn $test_name:ident() $body:block
+        )*
+    ) => {
+        $(
+            #[linkme::distributed_slice(crate::tests::TESTS)]
+            fn $test_name() {
+                crate::serial_print!("{}...\t", stringify!($test_name));
+                $body
+                crate::serial_println!("[ok]\n");
+            }
+        )*
+    };
 }

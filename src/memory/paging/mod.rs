@@ -19,7 +19,10 @@ const PAGE_TABLE_ENTRY_COUNT: usize = 512; // 512 * 8 bytes = 4KB
 pub type PhysAddr = usize;
 pub type VirtAddr = usize;
 
-pub fn remap_kernel<A: FrameAllocator>(allocator: &mut A, boot_info: &BootInformation) {
+pub fn remap_kernel<A: FrameAllocator>(
+    allocator: &mut A,
+    boot_info: &BootInformation,
+) -> ActivePageTable {
     let mut temporary_page = TemporaryPage::new(Page::new(0xcafebabe), allocator);
 
     let mut active_table = unsafe { ActivePageTable::new() };
@@ -39,12 +42,6 @@ pub fn remap_kernel<A: FrameAllocator>(allocator: &mut A, boot_info: &BootInform
                 // section is not loaded to memory
                 continue;
             }
-            crate::serial_println!(
-                "Section start addr is: {:#x}, size is: {:#x}, % is {}",
-                section.start_address(),
-                section.size(),
-                section.start_address() % 4096
-            );
             assert!(
                 section.start_address() % PAGE_SIZE == 0,
                 "sections need to be page aligned"
@@ -83,35 +80,10 @@ pub fn remap_kernel<A: FrameAllocator>(allocator: &mut A, boot_info: &BootInform
     active_table.unmap(old_p4_page, allocator);
     println!("Guard page at {:#x}", old_p4_page.start_address());
     println!("Switched to new page table!");
+
+    active_table
 }
 
-pub fn test_paging<A: FrameAllocator>(allocator: &mut A) {
-    let mut page_table = unsafe { ActivePageTable::new() };
-
-    let addr = 42 * 512 * 512 * 4096; // 42th P3 entry
-    let page = Page::containing_address(addr);
-    let frame = allocator.allocate_frame().expect("no more frames");
-    println!(
-        "None = {:?}, map to {:?}",
-        page_table.translate(addr),
-        frame
-    );
-    page_table.map_to(page, frame, EntryFlags::empty(), allocator);
-    println!("Some = {:?}", page_table.translate(addr));
-    println!("next free frame: {:?}", allocator.allocate_frame());
-
-    println!("{:#x}", unsafe {
-        *(Page::containing_address(addr).start_address() as *const u64)
-    });
-
-    page_table.unmap(Page::containing_address(addr), allocator);
-    println!("None = {:?}", page_table.translate(addr));
-
-    println!("{:#x}", unsafe {
-        *(Page::containing_address(addr).start_address() as *const u64)
-    });
-}
-
-pub fn init(allocator: &mut impl FrameAllocator, boot_info: &BootInformation) {
-    remap_kernel(allocator, boot_info);
+pub fn init(allocator: &mut impl FrameAllocator, boot_info: &BootInformation) -> ActivePageTable {
+    remap_kernel(allocator, boot_info)
 }

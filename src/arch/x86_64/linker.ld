@@ -51,8 +51,17 @@ SECTIONS {
     . = ALIGN(4K);
   }
 
-  .eh_frame : {
+  .eh_frame : ALIGN(4K) {
     *(.eh_frame)
     . = ALIGN(4K);
   }
+
+  linkme_TESTS : ALIGN(4K) {
+    KEEP(*(linkme_TESTS))
+  }
+
+  linkm2_TESTS : ALIGN(4K) {
+    KEEP(*(linkm2_TESTS))
+  }
+
 }

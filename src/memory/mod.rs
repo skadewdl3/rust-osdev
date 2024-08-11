@@ -2,11 +2,14 @@ pub mod frame;
 pub mod heap;
 pub mod paging;
 
-use crate::println;
-use frame::{AreaFrameAllocator, FrameAllocator};
+use frame::AreaFrameAllocator;
 use multiboot2::BootInformationHeader;
 
 pub const PAGE_SIZE: u64 = 4096; // 4KB
+
+pub enum MemoryError {
+    FrameAllocationFailed,
+}
 
 fn enable_bits() {
     // Enable nxe bit in the efer register
@@ -60,5 +63,10 @@ pub fn init(multiboot_info_ptr: usize) {
     );
 
     enable_bits();
-    paging::init(&mut frame_allocator, &boot_info)
+
+    // Initialzie 4-level paging
+    let mut active_page_table = paging::init(&mut frame_allocator, &boot_info);
+
+    // Initialize the heap
+    let _ = heap::init(&mut active_page_table, &mut frame_allocator);
 }
