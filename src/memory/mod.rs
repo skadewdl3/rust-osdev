@@ -5,8 +5,6 @@ pub mod paging;
 use frame::AreaFrameAllocator;
 use multiboot2::BootInformationHeader;
 
-pub const PAGE_SIZE: u64 = 4096; // 4KB
-
 pub enum MemoryError {
     FrameAllocationFailed,
 }

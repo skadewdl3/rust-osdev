@@ -19,13 +19,11 @@ pub mod panic;
 pub mod serial;
 pub mod vga_buffer;
 
-#[cfg(testing)]
 #[allow(unused_imports)]
 pub mod tests;
 
 use alloc::{boxed::Box, rc::Rc, vec::Vec};
 use core::arch::asm;
-use linkme::distributed_slice;
 
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_info_ptr: usize) {

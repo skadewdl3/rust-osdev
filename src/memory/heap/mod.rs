@@ -1,8 +1,10 @@
-mod bump_allocator;
+pub mod bump_allocator;
+pub mod utils;
 
 use alloc::{boxed::Box, vec::Vec};
-// use bump_allocator::BumpAllocator;
+use bump_allocator::BumpAllocator;
 use linked_list_allocator::LockedHeap;
+use utils::Locked;
 
 use super::{
     frame::FrameAllocator,
@@ -15,7 +17,7 @@ pub const HEAP_SIZE: usize = 100 * 1024; // 100 KiB
 
 #[global_allocator]
 // static ALLOCATOR: BumpAllocator = BumpAllocator;
-static ALLOCATOR: LockedHeap = LockedHeap::empty();
+static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
 
 pub fn init(mapper: &mut Mapper, allocator: &mut impl FrameAllocator) -> Result<(), MemoryError> {
     use x86_64::instructions::tlb;
@@ -38,7 +40,7 @@ pub fn init(mapper: &mut Mapper, allocator: &mut impl FrameAllocator) -> Result<
     }
 
     unsafe {
-        ALLOCATOR.lock().init(HEAP_START as *mut u8, HEAP_SIZE);
+        ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE);
     }
 
     Ok(())
