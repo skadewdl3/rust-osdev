@@ -9,10 +9,13 @@
     const_mut_refs
 )]
 #![allow(internal_features)]
+
 #[macro_use]
 extern crate alloc;
 
 pub mod framebuffer;
+
+#[macro_use]
 pub mod interrupts;
 pub mod memory;
 pub mod panic;
@@ -25,6 +28,7 @@ pub mod tests;
 
 use alloc::{boxed::Box, rc::Rc, vec::Vec};
 use core::arch::asm;
+use x86_64::instructions::hlt;
 
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
@@ -63,7 +67,13 @@ pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
     #[cfg(testing)]
     tests::test_runner();
 
-    println!("It did not crash");
+    // println!("It did not crash");
 
-    loop {}
+    hlt_loop();
+}
+
+fn hlt_loop() -> ! {
+    loop {
+        x86_64::instructions::hlt()
+    }
 }

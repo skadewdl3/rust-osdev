@@ -1,8 +1,10 @@
 mod idt;
+mod pic;
 
-use crate::println;
+use crate::{hlt_loop, println};
 use core::arch::asm;
 use idt::InterruptType;
+use pic::InterruptIndex;
 
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
@@ -132,16 +134,19 @@ lazy_static::lazy_static! {
         idt.set_handler(InterruptType::Breakpoint, handler!(breakpoint_handler));
         idt.set_handler(InterruptType::PageFault, handler_with_error_code!(page_fault_handler));
         idt.set_handler(InterruptType::DoubleFault, handler_with_error_code!(double_fault_handler));
+        idt.set_handler(InterruptIndex::Timer, handler!(timer_handler));
+        idt.set_handler(InterruptIndex::Keyboard, handler!(keyboard_handler));
         idt
     };
 }
 
 extern "C" fn divide_error_handler(stack_frame: &ExceptionStackFrame) {
     println!("EXCEPTION: DIVIDE BY ZERO\n{:#?}", stack_frame);
-    loop {}
+    hlt_loop();
 }
 extern "C" fn breakpoint_handler(stack_frame: &ExceptionStackFrame) {
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
+    hlt_loop();
 }
 
 extern "C" fn invalid_opcode_handler(stack_frame: &ExceptionStackFrame) {
@@ -149,7 +154,7 @@ extern "C" fn invalid_opcode_handler(stack_frame: &ExceptionStackFrame) {
         "\nEXCEPTION: INVALID OPCODE at {:#x}\n{:#?}",
         stack_frame.instruction_pointer, stack_frame
     );
-    loop {}
+    hlt_loop();
 }
 
 extern "C" fn double_fault_handler(stack_frame: &ExceptionStackFrame, error_code: u64) {
@@ -157,7 +162,7 @@ extern "C" fn double_fault_handler(stack_frame: &ExceptionStackFrame, error_code
         "\nEXCEPTION: DOUBLE FAULT\nerror code: {:?}\n{:#?}",
         error_code, stack_frame
     );
-    loop {}
+    hlt_loop();
 }
 
 extern "C" fn page_fault_handler(stack_frame: &ExceptionStackFrame, error_code: u64) -> ! {
@@ -169,9 +174,55 @@ extern "C" fn page_fault_handler(stack_frame: &ExceptionStackFrame, error_code: 
         PageFaultErrorCode::from_bits(error_code).unwrap(),
         stack_frame
     );
-    loop {}
+    hlt_loop();
+}
+
+extern "C" fn timer_handler(_stack_frame: &ExceptionStackFrame) {
+    crate::print!(".");
+
+    unsafe {
+        pic::PICS
+            .lock()
+            .notify_end_of_interrupt(InterruptIndex::Timer.into());
+    }
+}
+
+extern "C" fn keyboard_handler(_stack_frame: &ExceptionStackFrame) {
+    use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
+    use spin::Mutex;
+    use x86_64::instructions::port::Port;
+
+    lazy_static::lazy_static! {
+        static ref KEYBOARD: Mutex<Keyboard<layouts::Us104Key, ScancodeSet1>> =
+            Mutex::new(Keyboard::new(
+                ScancodeSet1::new(),
+                layouts::Us104Key,
+                HandleControl::Ignore
+            ));
+    }
+
+    let mut keyboard = KEYBOARD.lock();
+    let mut port = Port::new(0x60);
+
+    let scancode: u8 = unsafe { port.read() };
+    if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
+        if let Some(key) = keyboard.process_keyevent(key_event) {
+            match key {
+                DecodedKey::Unicode(character) => crate::print!("{}", character),
+                DecodedKey::RawKey(key) => crate::print!("{:?}", key),
+            }
+        }
+    }
+
+    unsafe {
+        pic::PICS
+            .lock()
+            .notify_end_of_interrupt(InterruptIndex::Keyboard.into());
+    }
 }
 
 pub fn init() {
     IDT.load();
+    unsafe { pic::PICS.lock().initialize() }
+    x86_64::instructions::interrupts::enable();
 }

@@ -30,9 +30,11 @@ macro_rules! test_cases {
 
         #[linkme::distributed_slice(crate::tests::TESTS)]
         fn $test_name() {
-            crate::serial_print!("{}...\t", stringify!($test_name));
-            $body
-            crate::serial_println!("[ok]\n");
+            ::x86_64::instructions::interrupts::without_interrupts(|| {
+                crate::serial_print!("{}...\t", stringify!($test_name));
+                $body
+                crate::serial_println!("[ok]\n");
+            });
         }
     };
 }

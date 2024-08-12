@@ -23,10 +23,12 @@ fn panic_handler(info: &PanicInfo) -> ! {
     println!("{}", info);
 
     #[cfg(testing)]
-    serial_println!("[failed]\n{}", info);
+    {
+        serial_println!("[failed]\n{}", info);
+        exit_qemu(QemuExitCode::Failed);
+    }
 
-    // exit_qemu(QemuExitCode::Failed);
-    loop {}
+    crate::hlt_loop();
 }
 
 // TODO: Implement panic_print from https://github.com/thepowersgang/rust-barebones-kernel/blob/master/Kernel/unwind.rs
