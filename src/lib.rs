@@ -5,10 +5,10 @@
     naked_functions,
     lang_items,
     ptr_internals,
-    allocator_api
+    allocator_api,
+    const_mut_refs
 )]
 #![allow(internal_features)]
-
 #[macro_use]
 extern crate alloc;
 

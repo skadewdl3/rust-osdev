@@ -19,10 +19,11 @@ pub fn exit_qemu(exit_code: QemuExitCode) {
 
 #[panic_handler]
 fn panic_handler(info: &PanicInfo) -> ! {
+    #[cfg(not(testing))]
     println!("{}", info);
 
     #[cfg(testing)]
-    serial_println!("{}", info);
+    serial_println!("[failed]\n{}", info);
 
     // exit_qemu(QemuExitCode::Failed);
     loop {}
