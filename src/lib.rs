@@ -20,6 +20,7 @@ pub mod serial;
 pub mod vga_buffer;
 
 #[allow(unused_imports)]
+#[macro_use]
 pub mod tests;
 
 use alloc::{boxed::Box, rc::Rc, vec::Vec};

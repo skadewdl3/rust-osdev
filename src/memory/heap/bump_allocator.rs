@@ -33,12 +33,10 @@ unsafe impl GlobalAlloc for Locked<BumpAllocator> {
         let alloc_end = match alloc_start.checked_add(layout.size()) {
             Some(end) => end,
             None => {
-                crate::serial_println!("Checked add error");
                 return null_mut();
             }
         };
         if alloc_end > allocator.heap_end {
-            crate::serial_println!("Heap overflow");
             return null_mut();
         } else {
             allocator.next = alloc_end;
