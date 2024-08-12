@@ -5,7 +5,7 @@ use x86_64::{PrivilegeLevel, VirtAddr};
 
 pub type HandlerFunc = extern "C" fn();
 
-pub struct Idt([Entry; 128]);
+pub struct Idt([Entry; 256]);
 
 #[allow(dead_code)]
 pub enum InterruptType {
@@ -62,7 +62,7 @@ impl Into<u8> for InterruptType {
 
 impl Idt {
     pub fn new() -> Idt {
-        Idt([Entry::missing(); 128])
+        Idt([Entry::missing(); 256])
     }
 
     pub fn set_handler(&mut self, entry: impl Into<u8>, handler: HandlerFunc) {

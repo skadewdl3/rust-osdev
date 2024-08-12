@@ -8,7 +8,7 @@ p3_table:
 p2_table:
   resb 4096
 stack_bottom:
-  resb 4096 * 4
+  resb 4096 * 5
 stack_top:
 
 ; Setting up GDT in the read only data section
