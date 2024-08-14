@@ -6,14 +6,13 @@ header_start:
   dd 0x100000000 - (0xe85250d6 + 0 + (header_end - header_start))
 
   ; Framebuffer tag
+  align 8
+framebuffer_tag_start:
   dw 5
-  dw 20
+  dw 1
+  dw framebuffer_tag_end - framebuffer_tag_start
   dd 1024
   dd 768
   dw 0
-  dw 0
-
-  ; End tag
-  dw 0
-  dw 8
+framebuffer_tag_end:
 header_end:

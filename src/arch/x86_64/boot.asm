@@ -39,6 +39,7 @@ start:
   
   call set_up_page_tables
 
+
   ; setup recursive paging
   mov eax, p4_table
   or eax, 0b11 ; present + writable

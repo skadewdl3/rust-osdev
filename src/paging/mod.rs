@@ -85,5 +85,29 @@ pub fn remap_kernel<A: FrameAllocator>(
 }
 
 pub fn init(allocator: &mut impl FrameAllocator, boot_info: &BootInformation) -> ActivePageTable {
-    remap_kernel(allocator, boot_info)
+    // Remap the kernel
+    let mut mapper = remap_kernel(allocator, boot_info);
+
+    // identity map the linear frame buffer
+    let tag = boot_info.framebuffer_tag().unwrap().unwrap();
+    let framebuffer_start = tag.address() as usize;
+    let width = tag.width() as usize;
+    let height = tag.height() as usize;
+    let pitch = tag.pitch() as usize;
+    let bytes_per_pixel = (tag.bpp() / 8) as usize;
+    let framebuffer_size = (pitch * height) as usize;
+
+    let frame_range = {
+        let framebuffer_start_frame = Frame::containing_address(framebuffer_start as u64);
+        let framebuffer_end_frame =
+            Frame::containing_address((framebuffer_start + framebuffer_size - 1) as u64);
+        Frame::range_inclusive(framebuffer_start_frame, framebuffer_end_frame)
+    };
+
+    for frame in frame_range {
+        let flags = EntryFlags::PRESENT | EntryFlags::WRITABLE;
+        mapper.identity_map(frame, flags, allocator);
+    }
+
+    mapper
 }

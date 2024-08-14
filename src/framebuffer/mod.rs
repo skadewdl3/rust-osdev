@@ -1,3 +1,6 @@
+pub mod color;
+pub mod writer;
+
 use crate::{
     memory::{
         frame::{Frame, FrameAllocator},
@@ -6,99 +9,86 @@ use crate::{
     paging::{active_page_table::ActivePageTable, entry::EntryFlags, page::Page},
     serial_println,
 };
-use multiboot2::{BootInformation, BootInformationHeader, TagTrait};
+use color::Color;
+use multiboot2::{BootInformation, BootInformationHeader, FramebufferTag, TagTrait};
+use spin::Mutex;
+use writer::FrameBufferWriter;
 use x86_64::instructions::tlb;
 
-const FRAMEBUFFER_ADDR: usize = 0xfd000000;
-const FRAMEBUFFER_SIZE: usize = 0x3e8000;
-const FRAMEBUFFER_PITCH: usize = 5120;
-const SCREEN_WIDTH: usize = 1280;
-const SCREEN_HEIGHT: usize = 720;
-const BYTES_PER_PIXEL: usize = 4;
-
-#[repr(C)]
-struct RGB {
-    red: u8,
-    green: u8,
-    blue: u8,
-    _reserved: u8,
+pub struct FrameBuffer {
+    start_address: usize,
+    width: usize,
+    height: usize,
+    pitch: usize,
+    buffer: &'static mut [u8],
+    bytes_per_pixel: usize,
 }
 
-pub fn draw_pixel(x: usize, y: usize, color: RGB) {
-    if x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT {
-        return;
-    }
+impl FrameBuffer {
+    pub fn new(tag: &FramebufferTag) -> Self {
+        let framebuffer_start = tag.address() as usize;
+        let width = tag.width() as usize;
+        let height = tag.height() as usize;
+        let pitch = tag.pitch() as usize;
+        let bytes_per_pixel = (tag.bpp() / 8) as usize;
+        let framebuffer_size = (pitch * height) as usize;
 
-    let framebuffer = FRAMEBUFFER_ADDR as *mut u8;
-    let offset = y * FRAMEBUFFER_PITCH + x * BYTES_PER_PIXEL;
-    unsafe {
-        // Write the color to the framebuffer at the calculated offset
-        let pixel = framebuffer.add(offset) as *mut RGB;
-        *pixel = color;
-    }
-}
+        let buffer: &mut [u8] = unsafe {
+            core::slice::from_raw_parts_mut(framebuffer_start as *mut u8, framebuffer_size)
+        };
 
-pub fn init(
-    boot_info: &BootInformation,
-    mapper: &mut ActivePageTable,
-    allocator: &mut impl FrameAllocator,
-) -> Result<(), MemoryError> {
-    let framebuffer_tag = boot_info
-        .framebuffer_tag()
-        .expect("Could not find framebuffer tag")
-        .unwrap();
-
-    let framebuffer_start = framebuffer_tag.address() as usize;
-    let width = framebuffer_tag.width();
-    let height = framebuffer_tag.height();
-    let pitch = framebuffer_tag.pitch();
-    let bytes_per_pixel = (framebuffer_tag.bpp() / 8) as usize;
-    let framebuffer_size = (pitch * height) as usize;
-
-    let frame_range = {
-        let framebuffer_start_frame = Frame::containing_address(framebuffer_start as u64);
-        let framebuffer_end_frame =
-            Frame::containing_address((framebuffer_start + framebuffer_size - 1) as u64);
-        Frame::range_inclusive(framebuffer_start_frame, framebuffer_end_frame)
-    };
-
-    for frame in frame_range {
-        let flags = EntryFlags::PRESENT | EntryFlags::WRITABLE;
-        mapper.identity_map(frame, flags, allocator);
-    }
-
-    tlb::flush_all();
-
-    let framebuffer: &mut [u8] =
-        unsafe { core::slice::from_raw_parts_mut(framebuffer_start as *mut u8, framebuffer_size) };
-
-    serial_println!("Framebuffer start: {:x}", framebuffer_start);
-    serial_println!("Framebuffer size: {:x}", framebuffer_size);
-    serial_println!(
-        "bpp - {}, pitch - {}, type = {:?}",
-        bytes_per_pixel,
-        pitch,
-        framebuffer_tag.buffer_type()
-    );
-
-    for y in 0..SCREEN_HEIGHT {
-        for x in 0..SCREEN_WIDTH {
-            draw_pixel(
-                x,
-                y,
-                RGB {
-                    red: 255,
-                    green: 0,
-                    blue: 0,
-                    _reserved: 0,
-                },
-            );
+        Self {
+            start_address: framebuffer_start,
+            width,
+            height,
+            pitch,
+            buffer,
+            bytes_per_pixel,
         }
     }
 
-    // self.framebuffer[byte_offset..(byte_offset + bytes_per_pixel)]
-    //     .copy_from_slice(&color[..bytes_per_pixel]);
-    // let _ = unsafe { ptr::read_volatile(&self.framebuffer[byte_offset]) };
+    pub fn width(&self) -> usize {
+        self.width
+    }
 
-    Ok(())
+    pub fn height(&self) -> usize {
+        self.height
+    }
+
+    pub fn pitch(&self) -> usize {
+        self.pitch
+    }
+
+    pub fn bpp(&self) -> usize {
+        self.bytes_per_pixel
+    }
+
+    pub fn buffer(&mut self) -> &mut [u8] {
+        &mut self.buffer
+    }
+}
+
+lazy_static::lazy_static! {
+    pub static ref WRITER: Mutex<Option<FrameBufferWriter>> = Mutex::new(None);
+}
+
+pub fn init<'a>(boot_info: &'a BootInformation) -> &'a FramebufferTag {
+    let tag = boot_info.framebuffer_tag().unwrap().unwrap();
+    let framebuffer = FrameBuffer::new(&tag);
+    *WRITER.lock() = Some(FrameBufferWriter::new(framebuffer));
+    &tag
+}
+
+pub fn test() {
+    let mut c = WRITER.lock();
+    let w = c.as_mut();
+    let mut w = w.unwrap();
+    serial_println!("Writing to: {:x}", w.start_address);
+    let width = w.width();
+    let height = w.height();
+    for y in 0..height {
+        for x in 0..width {
+            w.draw_pixel(x, y, Color::rgb(255, 0, 0));
+        }
+    }
 }
