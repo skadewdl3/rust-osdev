@@ -91,4 +91,6 @@ pub fn test() {
             w.draw_pixel(x, y, Color::rgb(255, 0, 0));
         }
     }
+
+    // w.write("Hello, World!");
 }

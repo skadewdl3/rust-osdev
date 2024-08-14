@@ -51,7 +51,6 @@ pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
     framebuffer::test();
     heap::init(&mut active_page_table, &mut frame_allocator);
 
-    framebuffer::test();
     #[cfg(testing)]
     tests::test_runner();
 
