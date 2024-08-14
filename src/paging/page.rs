@@ -3,8 +3,8 @@ use super::{
     table::{Level1, Table},
     PAGE_SIZE,
 };
-use crate::memory::{
-    frame::{Frame, FrameAllocator, TinyFrameAllocator},
+use crate::{
+    memory::frame::{Frame, FrameAllocator, TinyFrameAllocator},
     paging::entry::EntryFlags,
 };
 

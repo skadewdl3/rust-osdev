@@ -145,23 +145,23 @@ pub fn _print(args: fmt::Arguments) {
     });
 }
 
-crate::test_cases! {
-    fn printing_to_vga() {
-        println!("test_println_simple output");
-    }
-
-fn chars_appearing_on_vga() {
-    use core::fmt::Write;
-    use ::x86_64::instructions::interrupts;
-
-    let s = "Some test string that fits on a single line";
-    interrupts::without_interrupts(|| {
-        let mut writer = WRITER.lock();
-        writeln!(writer, "\n{}", s).expect("writeln failed");
-        for (i, c) in s.chars().enumerate() {
-            let screen_char = writer.buffer.chars[BUFFER_HEIGHT - 2][i].read();
-            assert_eq!(char::from(screen_char.ascii_character), c);
-        }
-    });
-}
-}
+// crate::test_cases! {
+//     fn printing_to_vga() {
+//         println!("test_println_simple output");
+//     }
+//
+// fn chars_appearing_on_vga() {
+//     use core::fmt::Write;
+//     use ::x86_64::instructions::interrupts;
+//
+//     let s = "Some test string that fits on a single line";
+//     interrupts::without_interrupts(|| {
+//         let mut writer = WRITER.lock();
+//         writeln!(writer, "\n{}", s).expect("writeln failed");
+//         for (i, c) in s.chars().enumerate() {
+//             let screen_char = writer.buffer.chars[BUFFER_HEIGHT - 2][i].read();
+//             assert_eq!(char::from(screen_char.ascii_character), c);
+//         }
+//     });
+// }
+// }

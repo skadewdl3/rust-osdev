@@ -4,7 +4,7 @@ mod tiny_frame_allocator;
 pub use area_frame_allocator::*;
 pub use tiny_frame_allocator::*;
 
-use super::paging::PAGE_SIZE;
+use crate::paging::PAGE_SIZE;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Frame {

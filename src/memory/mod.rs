@@ -1,9 +1,9 @@
 pub mod frame;
-pub mod heap;
-pub mod paging;
 
 use frame::AreaFrameAllocator;
-use multiboot2::BootInformationHeader;
+use multiboot2::{BootInformation, BootInformationHeader};
+
+use crate::paging::active_page_table::ActivePageTable;
 
 pub enum MemoryError {
     FrameAllocationFailed,
@@ -28,14 +28,9 @@ fn enable_bits() {
     unsafe { Cr0::write(Cr0Flags::all() | Cr0Flags::WRITE_PROTECT) }
 }
 
-pub fn init(multiboot_info_ptr: usize) {
-    let boot_info = unsafe {
-        multiboot2::BootInformation::load(multiboot_info_ptr as *const BootInformationHeader)
-            .unwrap()
-    };
-
-    let multiboot_start = multiboot_info_ptr as u64;
-    let multiboot_end = (multiboot_info_ptr + boot_info.total_size()) as u64;
+pub fn init<'a>(boot_info: &'a BootInformation) -> AreaFrameAllocator<'a> {
+    let multiboot_start = boot_info.start_address() as u64;
+    let multiboot_end = (multiboot_start + boot_info.total_size() as u64);
 
     let kernel_start = boot_info
         .elf_sections()
@@ -63,8 +58,10 @@ pub fn init(multiboot_info_ptr: usize) {
     enable_bits();
 
     // Initialzie 4-level paging
-    let mut active_page_table = paging::init(&mut frame_allocator, &boot_info);
+    // let mut active_page_table = paging::init(&mut frame_allocator, &boot_info);
 
     // Initialize the heap
-    let _ = heap::init(&mut active_page_table, &mut frame_allocator);
+    // let _ = heap::init(&mut active_page_table, &mut frame_allocator);
+
+    frame_allocator
 }

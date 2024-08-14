@@ -178,7 +178,7 @@ extern "C" fn page_fault_handler(stack_frame: &ExceptionStackFrame, error_code: 
 }
 
 extern "C" fn timer_handler(_stack_frame: &ExceptionStackFrame) {
-    crate::print!(".");
+    // crate::print!(".");
 
     unsafe {
         pic::PICS

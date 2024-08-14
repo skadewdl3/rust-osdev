@@ -36,7 +36,7 @@ start:
   call check_multiboot
   call check_cpuid
   call check_long_mode
-
+  
   call set_up_page_tables
 
   ; setup recursive paging
@@ -173,5 +173,3 @@ check_long_mode:
 .no_long_mode:
   mov al, "2"
   jmp error
-
-

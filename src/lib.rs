@@ -17,7 +17,9 @@ pub mod framebuffer;
 
 #[macro_use]
 pub mod interrupts;
+pub mod heap;
 pub mod memory;
+pub mod paging;
 pub mod panic;
 pub mod serial;
 pub mod vga_buffer;
@@ -28,46 +30,33 @@ pub mod tests;
 
 use alloc::{boxed::Box, rc::Rc, vec::Vec};
 use core::arch::asm;
+use multiboot2::BootInformationHeader;
+use paging::active_page_table;
 use x86_64::instructions::hlt;
 
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
-    println!("Hello World!");
+    // Parse the multiboot information header passed by grub
+    let boot_info = unsafe {
+        multiboot2::BootInformation::load(multiboot_info_ptr as *const BootInformationHeader)
+            .unwrap()
+    };
 
+    // Initialize interrupts
     interrupts::init();
-    memory::init(multiboot_info_ptr);
 
-    // TODO: Get framebuffer working
-    // framebuffer::init(multiboot_info_ptr);
+    // Create a frame allocator, and setup paging and heap
+    let mut frame_allocator = memory::init(&boot_info);
+    let mut active_page_table = paging::init(&mut frame_allocator, &boot_info);
+    heap::init(&mut active_page_table, &mut frame_allocator);
 
-    // Testing the heap
-    let heap_value = Box::new(42);
-    println!("heap_value at {:p}", heap_value);
-
-    // create a dynamically sized vector
-    let mut vec = Vec::new();
-    for i in 0..500 {
-        vec.push(i);
-    }
-    println!("vec at {:p}", vec.as_slice());
-
-    // create a reference counted vector -> will be freed when count reaches 0
-    let reference_counted = Rc::new(vec![1, 2, 3]);
-    let cloned_reference = reference_counted.clone();
-    println!(
-        "current reference count is {}",
-        Rc::strong_count(&cloned_reference)
-    );
-    core::mem::drop(reference_counted);
-    println!(
-        "reference count is {} now",
-        Rc::strong_count(&cloned_reference)
-    );
+    // Initialize the frame buffer
+    framebuffer::init(&boot_info, &mut active_page_table, &mut frame_allocator);
 
     #[cfg(testing)]
     tests::test_runner();
 
-    // println!("It did not crash");
+    println!("It did not crash");
 
     hlt_loop();
 }

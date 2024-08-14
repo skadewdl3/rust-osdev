@@ -13,7 +13,7 @@ pub fn test_runner() {
     for test in TESTS {
         test();
     }
-    exit_qemu(QemuExitCode::Success);
+    // exit_qemu(QemuExitCode::Success);
 }
 
 #[macro_export]

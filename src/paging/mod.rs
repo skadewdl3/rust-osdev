@@ -5,7 +5,7 @@ pub mod mapper;
 pub mod page;
 pub mod table;
 
-use super::frame::{Frame, FrameAllocator};
+use crate::memory::frame::{Frame, FrameAllocator};
 use crate::println;
 use active_page_table::ActivePageTable;
 use entry::EntryFlags;

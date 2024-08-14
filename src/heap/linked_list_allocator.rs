@@ -1,6 +1,6 @@
 use core::alloc::{GlobalAlloc, Layout};
 
-use crate::memory::heap::utils::{align_up, ListNode};
+use crate::heap::utils::{align_up, ListNode};
 
 use super::utils::Locked;
 

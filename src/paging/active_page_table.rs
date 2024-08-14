@@ -1,4 +1,4 @@
-use crate::memory::{frame::Frame, paging::entry::EntryFlags};
+use crate::{memory::frame::Frame, paging::entry::EntryFlags};
 
 use super::{inactive_page_table::InactivePageTable, mapper::Mapper, page::TemporaryPage};
 use core::ops::{Deref, DerefMut};

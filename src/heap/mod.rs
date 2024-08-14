@@ -2,15 +2,14 @@ pub mod bump_allocator;
 pub mod linked_list_allocator;
 pub mod utils;
 
-use alloc::{boxed::Box, vec::Vec};
+use alloc::{boxed::Box, rc::Rc, vec::Vec};
 use bump_allocator::BumpAllocator;
 use linked_list_allocator::LinkedListAllocator;
 use utils::Locked;
 
-use super::{
-    frame::FrameAllocator,
+use crate::{
+    memory::{frame::FrameAllocator, MemoryError},
     paging::{entry::EntryFlags, mapper::Mapper, page::Page},
-    MemoryError,
 };
 
 pub const HEAP_START: usize = 0x_4444_4444_0000;
@@ -70,5 +69,15 @@ crate::test_cases! {
             let x = Box::new(i);
             assert_eq!(*x, i);
         }
+    }
+
+    fn reference_counting() {
+        let rc = Rc::new(42);
+        assert_eq!(Rc::strong_count(&rc), 1);
+        let cloned_rc = rc.clone();
+        assert_eq!(Rc::strong_count(&rc), 2);
+        assert_eq!(Rc::strong_count(&cloned_rc), 2);
+        core::mem::drop(rc);
+        assert_eq!(Rc::strong_count(&cloned_rc), 1);
     }
 }
