@@ -66,6 +66,30 @@ impl FrameBuffer {
     pub fn buffer(&mut self) -> &mut [u8] {
         &mut self.buffer
     }
+
+    pub fn draw_pixel(&mut self, x: usize, y: usize, color: Color) {
+        if x >= self.width || y >= self.height {
+            return;
+        }
+        let offset = y * self.pitch + x * self.bytes_per_pixel;
+        let color = color.value();
+        let bpp = self.bytes_per_pixel;
+        let addr = self.start_address as *mut u8;
+        unsafe {
+            *addr.add(offset) = color[0];
+            *addr.add(offset + 1) = color[1];
+            *addr.add(offset + 2) = color[2];
+            *addr.add(offset + 3) = color[3];
+        }
+    }
+
+    pub fn fill(&mut self, color: Color) {
+        for y in 0..self.height {
+            for x in 0..self.width {
+                self.draw_pixel(x, y, color);
+            }
+        }
+    }
 }
 
 lazy_static::lazy_static! {
@@ -84,13 +108,7 @@ pub fn test() {
     let w = c.as_mut();
     let mut w = w.unwrap();
     serial_println!("Writing to: {:x}", w.start_address);
-    let width = w.width();
-    let height = w.height();
-    for y in 0..height {
-        for x in 0..width {
-            w.draw_pixel(x, y, Color::rgb(255, 0, 0));
-        }
-    }
+    w.fill(Color::rgb(255, 0, 0));
 
-    // w.write("Hello, World!");
+    w.write("A");
 }

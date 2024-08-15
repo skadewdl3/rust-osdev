@@ -1,4 +1,5 @@
 #[repr(C)]
+#[derive(Debug, Clone, Copy)]
 pub struct Color([u8; 4]);
 
 impl Color {
