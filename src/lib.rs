@@ -17,16 +17,17 @@ extern crate alloc;
 pub mod interrupts;
 pub mod framebuffer;
 pub mod heap;
+pub mod logger;
 pub mod memory;
 pub mod paging;
 pub mod panic;
 pub mod serial;
-pub mod vga_buffer;
 
 #[allow(unused_imports)]
 #[macro_use]
 pub mod tests;
 
+use framebuffer::{color::Color, WRITER};
 use multiboot2::BootInformationHeader;
 use x86_64::instructions::hlt;
 
@@ -47,9 +48,9 @@ pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
     // Create a frame allocator, and setup paging and heap
     let mut frame_allocator = memory::init(&boot_info);
     let mut active_page_table = paging::init(&mut frame_allocator, &boot_info);
-
-    framebuffer::test();
     heap::init(&mut active_page_table, &mut frame_allocator);
+
+    framebuffer::fill_bg();
 
     #[cfg(testing)]
     tests::test_runner();

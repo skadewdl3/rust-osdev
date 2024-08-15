@@ -22,6 +22,7 @@ pub struct FrameBuffer {
     pitch: usize,
     buffer: &'static mut [u8],
     bytes_per_pixel: usize,
+    paged: bool,
 }
 
 impl FrameBuffer {
@@ -44,6 +45,7 @@ impl FrameBuffer {
             pitch,
             buffer,
             bytes_per_pixel,
+            paged: false,
         }
     }
 
@@ -65,6 +67,14 @@ impl FrameBuffer {
 
     pub fn buffer(&mut self) -> &mut [u8] {
         &mut self.buffer
+    }
+
+    pub fn set_paged(&mut self, paged: bool) {
+        self.paged = paged;
+    }
+
+    pub fn paged(&self) -> bool {
+        self.paged
     }
 
     pub fn draw_pixel(&mut self, x: usize, y: usize, color: Color) {
@@ -96,19 +106,22 @@ lazy_static::lazy_static! {
     pub static ref WRITER: Mutex<Option<FrameBufferWriter>> = Mutex::new(None);
 }
 
-pub fn init<'a>(boot_info: &'a BootInformation) -> &'a FramebufferTag {
+pub fn init(boot_info: &BootInformation) {
     let tag = boot_info.framebuffer_tag().unwrap().unwrap();
     let framebuffer = FrameBuffer::new(&tag);
     *WRITER.lock() = Some(FrameBufferWriter::new(framebuffer));
-    &tag
 }
 
-pub fn test() {
-    let mut c = WRITER.lock();
-    let w = c.as_mut();
-    let mut w = w.unwrap();
-    serial_println!("Writing to: {:x}", w.start_address);
-    w.fill(Color::rgb(255, 0, 0));
-
-    w.write("A");
+pub fn fill_bg() {
+    let mut x = crate::framebuffer::WRITER.lock();
+    let mut c = x.as_mut().unwrap();
+    c.fill(Color::hex(0xff0000));
 }
+
+// Initialize the framebuffer writer font
+// pub fn init() {
+//     let mut c = WRITER.lock();
+//     let w = c.as_mut();
+//     let mut w = w.unwrap();
+//     w.load_font();
+// }

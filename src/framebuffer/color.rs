@@ -9,9 +9,9 @@ impl Color {
 
     pub fn hex(hex: u32) -> Self {
         Self([
-            ((hex >> 16) & 0xFF) as u8,
-            ((hex >> 8) & 0xFF) as u8,
             (hex & 0xFF) as u8,
+            ((hex >> 8) & 0xFF) as u8,
+            ((hex >> 16) & 0xFF) as u8,
             0,
         ])
     }

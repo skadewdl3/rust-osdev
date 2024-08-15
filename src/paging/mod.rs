@@ -47,7 +47,7 @@ pub fn remap_kernel<A: FrameAllocator>(
                 "sections need to be page aligned"
             );
 
-            crate::serial_println!(
+            println!(
                 "mapping section at addr: {:#x}, size: {:#x}",
                 section.start_address(),
                 section.size()
@@ -108,6 +108,10 @@ pub fn init(allocator: &mut impl FrameAllocator, boot_info: &BootInformation) ->
         let flags = EntryFlags::PRESENT | EntryFlags::WRITABLE;
         mapper.identity_map(frame, flags, allocator);
     }
+
+    let mut x = crate::framebuffer::WRITER.try_lock().unwrap();
+    let mut x = x.as_mut().unwrap();
+    x.set_paged(true);
 
     mapper
 }

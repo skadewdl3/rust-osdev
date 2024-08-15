@@ -1,9 +1,6 @@
 // pub mod vga_buffer;
 
 use crate::serial_println;
-use crate::*;
-use panic::{exit_qemu, QemuExitCode};
-use vga_buffer::*;
 
 #[linkme::distributed_slice]
 pub static TESTS: [fn()];

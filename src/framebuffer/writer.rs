@@ -1,13 +1,14 @@
 use super::{color::Color, FrameBuffer};
 use crate::serial_println;
 use core::ops::{Deref, DerefMut};
+use fontdue::Font;
 use noto_sans_mono_bitmap::{
     get_raster, get_raster_width, FontWeight, RasterHeight, RasterizedChar,
 };
 
 const LINE_SPACING: usize = 2;
-const LETTER_SPACING: usize = 0;
-const BORDER_PADDING: usize = 1;
+const LETTER_SPACING: usize = 5;
+const BORDER_PADDING: usize = 20;
 pub const CHAR_RASTER_HEIGHT: RasterHeight = RasterHeight::Size16;
 pub const CHAR_RASTER_WIDTH: usize = get_raster_width(FontWeight::Regular, CHAR_RASTER_HEIGHT);
 pub const BACKUP_CHAR: char = '�';
@@ -26,17 +27,23 @@ pub struct FrameBufferWriter {
     y_offset: usize,
     background: Color,
     foreground: Color,
+    font: Option<Font>,
 }
 
 impl FrameBufferWriter {
     pub fn new(buffer: FrameBuffer) -> Self {
         Self {
             _buffer: buffer,
-            x_offset: 0,
-            y_offset: 0,
-            background: Color::hex(0x000000),
+            x_offset: BORDER_PADDING,
+            y_offset: BORDER_PADDING,
+            background: Color::hex(0xff0000),
             foreground: Color::hex(0xffffff),
+            font: None,
         }
+    }
+
+    pub fn load_font(&mut self) {
+        todo!()
     }
 
     fn newline(&mut self) {
@@ -60,8 +67,6 @@ impl FrameBufferWriter {
         for char in text.chars() {
             self.write_char(char);
         }
-        serial_println!("Writing: {}", text);
-        // TODO:
     }
 
     pub fn write_char(&mut self, c: char) {
@@ -87,10 +92,14 @@ impl FrameBufferWriter {
     fn write_rendered_char(&mut self, rendered_char: RasterizedChar) {
         for (y, row) in rendered_char.raster().iter().enumerate() {
             for (x, byte) in row.iter().enumerate() {
+                // serial_println!("{:#?}", byte);
                 // serial_println!("Writing pixel: ({}, {})", x, y);
-                let color = self.foreground;
+                let mut color = self.foreground;
                 let x_offset = self.x_offset;
                 let y_offset = self.y_offset;
+                if *byte == 0 {
+                    color = self.background
+                }
                 self.draw_pixel(x_offset + x, y_offset + y, color);
             }
         }
@@ -109,5 +118,14 @@ impl Deref for FrameBufferWriter {
 impl DerefMut for FrameBufferWriter {
     fn deref_mut(&mut self) -> &mut FrameBuffer {
         &mut self._buffer
+    }
+}
+
+impl core::fmt::Write for FrameBufferWriter {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        for c in s.chars() {
+            self.write_char(c);
+        }
+        Ok(())
     }
 }
