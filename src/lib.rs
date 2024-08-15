@@ -13,15 +13,15 @@
 #[macro_use]
 extern crate alloc;
 
-#[macro_use]
-pub mod interrupts;
 pub mod framebuffer;
 pub mod heap;
-pub mod logger;
+pub mod interrupts;
 pub mod memory;
 pub mod paging;
 pub mod panic;
-pub mod serial;
+
+#[macro_use]
+pub mod logger;
 
 #[allow(unused_imports)]
 #[macro_use]

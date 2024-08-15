@@ -1,7 +1,51 @@
 use core::{arch::x86_64, fmt};
 use lazy_static::lazy_static;
 use spin::Mutex;
+use uart_16550::SerialPort;
 
+lazy_static! {
+    pub static ref SERIAL1: Mutex<SerialPort> = {
+        let mut serial_port = unsafe { SerialPort::new(0x3F8) };
+        serial_port.init();
+        Mutex::new(serial_port)
+    };
+}
+
+pub fn _print_framebuffer(
+    args: fmt::Arguments,
+    writer: &mut crate::framebuffer::writer::FrameBufferWriter,
+) {
+    use core::fmt::Write;
+    writer
+        .write_fmt(args)
+        .expect("Writing to framebuffer failed");
+}
+
+pub fn _print_serial(args: fmt::Arguments) {
+    use core::fmt::Write;
+    SERIAL1
+        .lock()
+        .write_fmt(args)
+        .expect("Writing to serial failed");
+}
+
+#[doc(hidden)]
+pub fn _print(args: fmt::Arguments) {
+    use core::fmt::Write;
+    ::x86_64::instructions::interrupts::without_interrupts(|| {
+        let mut x = crate::framebuffer::WRITER.lock();
+        if let Some(writer) = x.as_mut() {
+            if writer.paged() {
+                _print_framebuffer(args, writer);
+                return;
+            }
+        }
+        _print_serial(args);
+    });
+}
+
+// Prints to the frame buffer, if it is availabe annd mapped
+// Else, falls back to serial output
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => ($crate::logger::_print(format_args!($($arg)*)));
@@ -13,27 +57,21 @@ macro_rules! println {
     ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
 }
 
-// #[doc(hidden)]
-pub fn _print(args: fmt::Arguments) {
-    use core::fmt::Write;
-    ::x86_64::instructions::interrupts::without_interrupts(|| {
-        let mut x = crate::framebuffer::WRITER.lock();
-        if let Some(c) = x.as_mut() {
-            if c.paged() {
-                c.write_fmt(args).expect("Writing to framebuffer failed");
-            } else {
-                crate::serial::SERIAL1
-                    .lock()
-                    .write_fmt(args)
-                    .expect("Writing to serial failed");
-            }
-        } else {
-            crate::serial::SERIAL1
-                .lock()
-                .write_fmt(args)
-                .expect("Writing to serial failed");
-        }
-    });
+// Prints to the host through the serial interface.
+#[macro_export]
+macro_rules! serial_print {
+    ($($arg:tt)*) => {
+        $crate::logger::_print_serial(format_args!($($arg)*));
+    };
+}
+
+// Prints to the host through the serial interface, appending a newline.
+#[macro_export]
+macro_rules! serial_println {
+    () => ($crate::serial_print!("\n"));
+    ($fmt:expr) => ($crate::serial_print!(concat!($fmt, "\n")));
+    ($fmt:expr, $($arg:tt)*) => ($crate::serial_print!(
+        concat!($fmt, "\n"), $($arg)*));
 }
 
 // crate::test_cases! {
