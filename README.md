@@ -29,5 +29,60 @@
 # Testing
 1. The project does compiles for a bare metal target, hence it does not use the Rust standard library.
 2. I couldn't get `cargo test` to work with no-std, so I've used a scrappy custom testing framework.
-3. Annotate tests with `#[distributed_slice(crate::tests::TESTS)]` to add it to the list of tests.
-4. This is very much of a work in progress. I intend to have a `#[test_case]` macro similar to standard Rust, to annotate test cases.
+3. Write your test functions inside the crate::test_cases! macro, to run them as test cases. Example - 
+```rust
+crate::test_cases! {
+    fn box_allocation() {
+        let heap_value_1 = Box::new(41);
+        let heap_value_2 = Box::new(13);
+        assert_eq!(*heap_value_1, 41);
+        assert_eq!(*heap_value_2, 13);
+    }
+
+    fn vector_allocation() {
+        let n = 1000;
+        let mut vec = Vec::new();
+        for i in 0..n {
+            vec.push(i);
+        }
+        assert_eq!(vec.iter().sum::<u64>(), (n - 1) * n / 2);
+    }
+
+
+    fn multiple_boxes_causing_reallocation() {
+        for i in 0..HEAP_SIZE {
+            let x = Box::new(i);
+            assert_eq!(*x, i);
+        }
+    }
+
+    fn reference_counting() {
+        let rc = Rc::new(42);
+        assert_eq!(Rc::strong_count(&rc), 1);
+        let cloned_rc = rc.clone();
+        assert_eq!(Rc::strong_count(&rc), 2);
+        assert_eq!(Rc::strong_count(&cloned_rc), 2);
+        core::mem::drop(rc);
+        assert_eq!(Rc::strong_count(&cloned_rc), 1);
+    }
+}
+```
+
+# Roadmap
+Most of the roadmap follows the great [blog](https://os.phil-opp.com/) by [Philipp Oppermann](https://github.com/phil-opp). However, I sort of combined the first and second editions of the blog, since I couldn't get some things to work, or just wanted to build it from scratch.
+
+  - [x] Basic kernel and booting
+  - [x] Setup IDT and catch exceptions
+  - [x] Setup logger (using the VGA buffer)
+  - [x] Setup tests (using [linkme crate](https://crates.io/crates/linkme))
+  - [x] Setup IDT and catch exceptions
+  - [x] Handle hardware interrupts (using the [pic8259](https://crates.io/crates/pic8259) crate)
+  - [x] Make a frame allocator to allocate physical frames
+  - [x] Setup 4-level recursive paging
+  - [x] Setup a heap allocator
+  - [x] Create a linked list allocator for heap allocations
+  - [x] Setup a VESA framebuffer
+  - [x] Implement double buffering
+  - [ ] Implement an asynchronous task executor
+  - [ ] Create a process scheduler?
+  - [ ] Implement some filesystem (FAT32 maybe?)
