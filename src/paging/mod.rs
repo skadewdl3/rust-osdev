@@ -109,9 +109,5 @@ pub fn init(allocator: &mut impl FrameAllocator, boot_info: &BootInformation) ->
         mapper.identity_map(frame, flags, allocator);
     }
 
-    let mut x = crate::framebuffer::WRITER.try_lock().unwrap();
-    let mut x = x.as_mut().unwrap();
-    x.set_paged(true);
-
     mapper
 }

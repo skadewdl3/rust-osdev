@@ -11,12 +11,10 @@ lazy_static! {
     };
 }
 
-pub fn _print_framebuffer(
-    args: fmt::Arguments,
-    writer: &mut crate::framebuffer::writer::FrameBufferWriter,
-) {
+pub fn _print_framebuffer(args: fmt::Arguments) {
     use core::fmt::Write;
-    writer
+    crate::framebuffer::WRITER
+        .lock()
         .write_fmt(args)
         .expect("Writing to framebuffer failed");
 }
@@ -33,14 +31,16 @@ pub fn _print_serial(args: fmt::Arguments) {
 pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
     ::x86_64::instructions::interrupts::without_interrupts(|| {
-        let mut x = crate::framebuffer::WRITER.lock();
-        if let Some(writer) = x.as_mut() {
-            if writer.paged() {
-                _print_framebuffer(args, writer);
-                return;
-            }
+        let mut renderer_exists = false;
+        {
+            let mut x = crate::framebuffer::RENDERER.lock();
+            renderer_exists = x.is_some();
         }
-        _print_serial(args);
+        if renderer_exists {
+            _print_framebuffer(args);
+        } else {
+            _print_serial(args);
+        }
     });
 }
 

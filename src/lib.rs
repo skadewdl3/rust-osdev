@@ -42,14 +42,13 @@ pub extern "C" fn rust_main(multiboot_info_ptr: usize) {
     // Initialize interrupts
     interrupts::init();
 
-    // Initialize frame buffer
-    framebuffer::init(&boot_info);
-
     // Create a frame allocator, and setup paging and heap
     let mut frame_allocator = memory::init(&boot_info);
     let mut active_page_table = paging::init(&mut frame_allocator, &boot_info);
     heap::init(&mut active_page_table, &mut frame_allocator);
 
+    // Initialize frame buffer
+    framebuffer::init(&boot_info);
     framebuffer::fill_bg();
 
     #[cfg(testing)]

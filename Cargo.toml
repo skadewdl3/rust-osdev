@@ -29,6 +29,7 @@ features = [
     "unicode-basic-latin",
     # required for the fallback char '�'
     "unicode-specials",
+    "size_32"
 ]
 
 [dependencies.fontdue]

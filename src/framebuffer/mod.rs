@@ -1,4 +1,6 @@
+pub mod builder;
 pub mod color;
+pub mod renderer;
 pub mod writer;
 
 use crate::{
@@ -9,8 +11,13 @@ use crate::{
     paging::{active_page_table::ActivePageTable, entry::EntryFlags, page::Page},
     serial_println,
 };
+use alloc::vec::Vec;
+use builder::FrameBufferBuilder;
 use color::Color;
-use multiboot2::{BootInformation, BootInformationHeader, FramebufferTag, TagTrait};
+use multiboot2::{
+    BootInformation, BootInformationHeader, FramebufferField, FramebufferTag, TagTrait,
+};
+use renderer::FrameBufferRenderer;
 use spin::Mutex;
 use writer::FrameBufferWriter;
 use x86_64::instructions::tlb;
@@ -26,29 +33,6 @@ pub struct FrameBuffer {
 }
 
 impl FrameBuffer {
-    pub fn new(tag: &FramebufferTag) -> Self {
-        let framebuffer_start = tag.address() as usize;
-        let width = tag.width() as usize;
-        let height = tag.height() as usize;
-        let pitch = tag.pitch() as usize;
-        let bytes_per_pixel = (tag.bpp() / 8) as usize;
-        let framebuffer_size = (pitch * height) as usize;
-
-        let buffer: &mut [u8] = unsafe {
-            core::slice::from_raw_parts_mut(framebuffer_start as *mut u8, framebuffer_size)
-        };
-
-        Self {
-            start_address: framebuffer_start,
-            width,
-            height,
-            pitch,
-            buffer,
-            bytes_per_pixel,
-            paged: false,
-        }
-    }
-
     pub fn width(&self) -> usize {
         self.width
     }
@@ -69,12 +53,8 @@ impl FrameBuffer {
         &mut self.buffer
     }
 
-    pub fn set_paged(&mut self, paged: bool) {
-        self.paged = paged;
-    }
-
-    pub fn paged(&self) -> bool {
-        self.paged
+    pub fn start_address(&self) -> usize {
+        self.start_address
     }
 
     pub fn draw_pixel(&mut self, x: usize, y: usize, color: Color) {
@@ -103,19 +83,32 @@ impl FrameBuffer {
 }
 
 lazy_static::lazy_static! {
-    pub static ref WRITER: Mutex<Option<FrameBufferWriter>> = Mutex::new(None);
+    pub static ref WRITER: Mutex<FrameBufferWriter> = Mutex::new(FrameBufferWriter::new());
+    pub static ref RENDERER: Mutex<Option<FrameBufferRenderer>> = Mutex::new(None);
 }
 
-pub fn init(boot_info: &BootInformation) {
+pub fn init<'a>(boot_info: &BootInformation) {
     let tag = boot_info.framebuffer_tag().unwrap().unwrap();
-    let framebuffer = FrameBuffer::new(&tag);
-    *WRITER.lock() = Some(FrameBufferWriter::new(framebuffer));
+    let framebuffer = FrameBufferBuilder::new().from_tag(&tag).build();
+
+    let front = FrameBufferBuilder::new().from_tag(&tag).build();
+    let back = FrameBufferBuilder::new()
+        .from_tag(&tag)
+        .allocate_buffer()
+        .build();
+
+    let renderer = FrameBufferRenderer::new(front, back);
+
+    *RENDERER.lock() = Some(renderer);
+
+    // *WRITER.lock() = Some(FrameBufferWriter::new(framebuffer));
 }
 
 pub fn fill_bg() {
-    let mut x = crate::framebuffer::WRITER.lock();
+    let mut x = crate::framebuffer::RENDERER.lock();
     let mut c = x.as_mut().unwrap();
     c.fill(Color::hex(0xff0000));
+    c.swap();
 }
 
 // Initialize the framebuffer writer font
