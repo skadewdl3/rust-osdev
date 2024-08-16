@@ -1,4 +1,4 @@
-use super::{color::Color, renderer::FrameBufferRenderer, FrameBuffer};
+use super::{color::Color, renderer::FrameBufferRenderer, with_renderer, FrameBuffer};
 use crate::serial_println;
 use core::ops::{Deref, DerefMut};
 use fontdue::Font;
@@ -53,19 +53,12 @@ impl FrameBufferWriter {
         self.x_offset = BORDER_PADDING;
     }
 
-    fn with_renderer(mut callback: impl FnMut(&mut FrameBufferRenderer)) {
-        let mut x = crate::framebuffer::RENDERER.lock();
-        let x = x.as_mut();
-        let x = x.unwrap();
-        callback(x);
-    }
-
     /// Erases all text on the screen. Resets `self.x_offset` and `self.y_offset`.
     pub fn clear(&mut self) {
         self.x_offset = BORDER_PADDING;
         self.y_offset = BORDER_PADDING;
         let color = self.background;
-        Self::with_renderer(|renderer| {
+        with_renderer(|renderer| {
             renderer.fill(color);
             renderer.swap();
         })
@@ -85,7 +78,7 @@ impl FrameBufferWriter {
             '\r' => self.carriage_return(),
             c => {
                 let new_xpos = x_offset + CHAR_RASTER_WIDTH;
-                Self::with_renderer(|renderer| {
+                with_renderer(|renderer| {
                     if new_xpos >= renderer.width() {
                         self.newline();
                     }
@@ -100,7 +93,7 @@ impl FrameBufferWriter {
     }
 
     fn write_rendered_char(&mut self, rendered_char: RasterizedChar) {
-        Self::with_renderer(|renderer| {
+        with_renderer(|renderer| {
             for (y, row) in rendered_char.raster().iter().enumerate() {
                 for (x, byte) in row.iter().enumerate() {
                     // serial_println!("{:#?}", byte);

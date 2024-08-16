@@ -87,6 +87,13 @@ lazy_static::lazy_static! {
     pub static ref RENDERER: Mutex<Option<FrameBufferRenderer>> = Mutex::new(None);
 }
 
+fn with_renderer(mut callback: impl FnMut(&mut FrameBufferRenderer)) {
+    let mut x = crate::framebuffer::RENDERER.lock();
+    let x = x.as_mut();
+    let x = x.unwrap();
+    callback(x);
+}
+
 pub fn init<'a>(boot_info: &BootInformation) {
     let tag = boot_info.framebuffer_tag().unwrap().unwrap();
     let framebuffer = FrameBufferBuilder::new().from_tag(&tag).build();
