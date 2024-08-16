@@ -73,15 +73,18 @@ Most of the roadmap follows the great [blog](https://os.phil-opp.com/) by [Phili
 
   - [x] Basic kernel and booting
   - [x] Setup IDT and catch exceptions
-  - [x] Setup logger (using the VGA buffer)
+  - [x] Setup VGA Buffer
   - [x] Setup tests (using [linkme crate](https://crates.io/crates/linkme))
   - [x] Setup IDT and catch exceptions
   - [x] Handle hardware interrupts (using the [pic8259](https://crates.io/crates/pic8259) crate)
+  - [x] Improve testing framework (added the crate::test_cases macro)
   - [x] Make a frame allocator to allocate physical frames
   - [x] Setup 4-level recursive paging
   - [x] Setup a heap allocator
   - [x] Create a linked list allocator for heap allocations
   - [x] Setup a VESA framebuffer
+  - [x] Remove the VGA buffer usages for logging
+  - [x] Setup a better logger (println macro prints to serial if framebuffer is not initialized, else prints to the framebuffer)
   - [x] Implement double buffering
   - [ ] Implement an asynchronous task executor
   - [ ] Create a process scheduler?
